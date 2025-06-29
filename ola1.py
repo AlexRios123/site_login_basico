@@ -20,6 +20,35 @@ def login():
 def bemvindo():
     return render_template("bemvindo.html")
 
+
+
+
+
+@app.route("/nutricao", methods=["POST"])
+def login_nutri():
+    usuario = request.form["usuario"]
+    senha = request.form["senha"]
+    if usuario == "adm" and senha == "123":
+        return "Área da Nutrição"
+    else:
+        return render_template("bemvindo.html", erro_nutri="Usuário ou senha inválidos")
+
+@app.route("/psicologia", methods=["POST"])
+def login_psico():
+    usuario = request.form["usuario"]
+    senha = request.form["senha"]
+    if usuario == "adm" and senha == "123":
+        return "Área da Psicologia"
+    else:
+        return render_template("bemvindo.html", erro_psico="Usuário ou senha inválidos")
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
