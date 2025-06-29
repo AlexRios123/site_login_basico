@@ -103,6 +103,23 @@
     .coluna h2 {
       color: #4CAF50;
     }
+
+
+
+    .whatsapp-link img {
+      width: 40px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+
+
+
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -126,10 +143,27 @@
   </header>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   <div class="apresentacao">
     <p>
       A <strong>PsiconutriSaúde</strong> foi constituída com a finalidade de prestar um atendimento de excelência, humanizado e acolhedor.
     </p>
+
+
+
+
   </div>
 
 
@@ -144,12 +178,27 @@
       <h2>Nutricionista</h2>
       <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Nutricionista">
       <p>Rogéria Souza, CRN/MG 34768, pós-graduada em suplementação, fitoterápicos, nutrição esportiva, nutrigenômica e nutrigenética.</p>
+      <a class="whatsapp-link" href="https://wa.me/5533984077015" target="_blank">
+        <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Nutricionista">
+      </a>
+        
+   
+   
+   
+   
+   
     </div>
 
     <div class="coluna">
       <h2>Psicóloga</h2>
       <img src="{{ url_for('static', filename='img/psico.jpg') }}" alt="Psicóloga">
       <p>Em construção!</p>
+      <a class="whatsapp-link" href="https://wa.me/5531888888888" target="_blank">
+        <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Psicóloga">
+      </a>
+
+
+
     </div>
   </div>
 </body>
