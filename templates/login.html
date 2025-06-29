@@ -5,46 +5,152 @@
   <title>Login</title>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: #f5f5f5;
       margin: 0;
     }
+
     header {
-      background:rgb(209, 223, 209);
-      padding: 10px;
-      color: white;
+      background: rgb(209, 223, 209);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 100px;
+      margin-right: 15px;
+    }
+
+    .titulo {
+      font-size: 24px;
+      color: #4CAF50;
+    }
+
     .login-box {
-      position: absolute;
-      top: 10px;
-      right: 10px; /* 👉 trocamos 'left' por 'right' */
       background: white;
-      padding: 15px;
+      padding: 10px;
       border-radius: 6px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 180px;
     }
-    input, button {
-      display: block;
-      margin: 8px 0;
-      padding: 8px;
-      width: 200px;
+
+    .login-box input {
+      background-color: #fffacd;
+      border: 1px solid #ccc;
+      padding: 6px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .login-box button {
+      background-color: #eee;
+      border: 1px solid #aaa;
+      padding: 6px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .login-box button:hover {
+      background-color: #ddd;
+    }
+
+    .login-container {
+      margin-right: 10px;
+    }
+
+
+
+    .apresentacao {
+      background: white;
+      text-align: center;
+      padding: 30px 20px 10px 20px;
+      font-size: 18px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+
+
+
+    /* Área das divisões inferiores */
+    .conteudo {
+      display: flex;
+      justify-content: space-around;
+      padding: 40px 20px;
+      background: white;
+    }
+
+    .coluna {
+      width: 45%;
+      text-align: center;
+    }
+
+    .coluna img {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .coluna h2 {
+      color: #4CAF50;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="height: 100px; vertical-align: middle; margin-right: 20px;">
-    
+    <div class="logo">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
+      
+    </div>
+    <div class="login-container">
+      <div class="login-box">
+        <form method="POST">
+          <input type="text" name="usuario" placeholder="Usuário" required>
+          <input type="password" name="senha" placeholder="Senha" required>
+          <button type="submit">Entrar</button>
+        </form>
+        {% if erro %}
+          <p style="color: red">{{ erro }}</p>
+        {% endif %}
+      </div>
+    </div>
   </header>
-  <div class="login-box">
-    <form method="POST">
-      <input type="text" name="usuario" placeholder="Usuário" required>
-      <input type="password" name="senha" placeholder="Senha" required>
-      <button type="submit">Entrar</button>
-    </form>
-    {% if erro %}
-      <p style="color: red">{{ erro }}</p>
-    {% endif %}
+
+
+  <div class="apresentacao">
+    <p>
+      A <strong>PsiconutriSaúde</strong> foi constituída com a finalidade de prestar um atendimento de excelência, humanizado e acolhedor.
+    </p>
+  </div>
+
+
+
+
+
+
+
+
+  <div class="conteudo">
+    <div class="coluna">
+      <h2>Nutricionista</h2>
+      <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Nutricionista">
+      <p>Rogéria Souza, CRN/MG 34768, pós-graduada em suplementação, fitoterápicos, nutrição esportiva, nutrigenômica e nutrigenética.</p>
+    </div>
+
+    <div class="coluna">
+      <h2>Psicóloga</h2>
+      <img src="{{ url_for('static', filename='img/psico.jpg') }}" alt="Psicóloga">
+      <p>Em construção!</p>
+    </div>
   </div>
 </body>
 </html>
