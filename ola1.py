@@ -29,7 +29,7 @@ def login_nutri():
     usuario = request.form["usuario"]
     senha = request.form["senha"]
     if usuario == "adm" and senha == "123":
-        return "Área da Nutrição"
+        return render_template("nutricao.html")
     else:
         return render_template("bemvindo.html", erro_nutri="Usuário ou senha inválidos")
 
