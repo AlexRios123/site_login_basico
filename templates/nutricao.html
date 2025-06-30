@@ -6,26 +6,32 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #e0f7e9; /* verde claro */
-      text-align: center;
-      padding-top: 60px;
+      background-color: #e0f7e9;
+      padding: 30px;
+      margin: 0;
     }
 
     h1 {
-      color: #388e3c;
-      margin-bottom: 40px;
+      color: #2e7d32;
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     .botoes {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 15px;
+      margin-bottom: 40px;
+    }
+
+    .botoes form,
+    .botoes button {
+      display: inline-block;
     }
 
     .botoes button {
-      width: 200px;
-      padding: 12px;
+      padding: 12px 24px;
       font-size: 16px;
       background-color: #4CAF50;
       color: white;
@@ -33,27 +39,217 @@
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.2s ease;
+      min-width: 150px;
     }
 
     .botoes button:hover {
       background-color: #45a049;
     }
+
+    table {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto 40px auto;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #bbb;
+      padding: 10px;
+      text-align: center;
+    }
+
+    thead {
+      background-color: #dcedc8;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid #a5d6a7;
+      margin: 50px 0 20px 0;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+
+    .confirmar-btn {
+      background-color: #2196F3;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .confirmar-btn:hover {
+      background-color: #1976D2;
+    }
+
+    .recusar-btn {
+      background-color: #f44336;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    .recusar-btn:hover {
+      background-color: #c62828;
+    }
+
+    .mensagem {
+      text-align: center;
+      font-style: italic;
+      color: #888;
+    }
   </style>
 </head>
 <body>
+
   <h1>Área da Nutrição</h1>
 
   <div class="botoes">
-    <button>Agenda</button>
-    <button>1</button>
-    <button>2</button>
-    <button>3</button>
-    <button>4</button>
-    <button>5</button>
-    <button>6</button>
-    <button>7</button>
-    <button>8</button>
-    <button>9</button>
+    <form action="/agenda" method="GET">
+      <button type="submit">Agenda</button>
+    </form>
+    <!-- Outros botões podem ser adicionados aqui -->
   </div>
+
+  <hr>
+  <h2>Solicitações de Agendamento</h2>
+  {% if pendentes %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Telefone</th>
+          <th>Data</th>
+          <th>Hora</th>
+          <th>Plano</th>
+          <th>Tipo</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in pendentes %}
+          <tr>
+            <td>{{ row[1] }}</td>  <!-- nome -->
+            <td>{{ row[2] }}</td>  <!-- cpf -->
+            <td>{{ row[3] }}</td>  <!-- telefone -->
+            <td>{{ row[4] }}</td>  <!-- data -->
+            <td>{{ row[5] }}</td>  <!-- hora -->
+            <td>{{ row[6] }}</td>  <!-- plano_nome -->
+            <td>{{ row[7] }}</td>  <!-- tipo_atendimento -->
+            <td>
+              <form method="POST" action="/confirmar_agendamento">
+                <input type="hidden" name="id" value="{{ row[0] }}">
+                <button type="submit">Confirmar</button>
+              </form>
+              <form method="POST" action="/recusar_agendamento">
+                <input type="hidden" name="id" value="{{ row[0] }}">
+                <button type="submit" style="background:red; color:white;">Recusar</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="mensagem">Nenhuma solicitação pendente.</p>
+  {% endif %}
+
+  <hr>
+  <div style="text-align:center; margin-top:20px;">
+    <button id="btnAdicionarPaciente" onclick="mostrarFormulario()" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+      Adicionar Paciente
+    </button>
+  </div>
+
+    <!-- NOVO formulário oculto -->
+  <div id="formPaciente" style="display:none; margin: 20px auto; max-width: 600px;">
+    <form method="POST" action="/salvar_paciente_confirmado" style="background:white; padding: 20px; border-radius: 10px;">
+      <label>Nome:</label>
+      <input type="text" name="nome" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>CPF:</label>
+      <input type="text" name="cpf" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Telefone:</label>
+      <input type="text" name="telefone" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Data:</label>
+      <input type="date" name="data" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Hora:</label>
+      <input type="time" name="hora" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Plano:</label>
+      <input type="text" name="plano" style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Tipo:</label>
+      <select name="tipo" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <option value="Presencial">Presencial</option>
+        <option value="Online">Online</option>
+      </select>
+
+      <button type="submit" style="background-color: #4CAF50; color:white; padding: 10px 20px; border:none; border-radius: 5px;">Salvar</button>
+    </form>
+  </div>
+
+
+
+
+
+  <h2>Agenda Confirmada</h2>
+  {% if confirmados %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Telefone</th>
+          <th>Data</th>
+          <th>Hora</th>
+          <th>Plano</th>
+          <th>Tipo</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in confirmados %}
+        <tr>
+          <td>{{ c[1] }}</td>
+          <td>{{ c[2] }}</td>
+          <td>{{ c[3] }}</td>
+          <td>{{ c[4] }}</td>
+          <td>{{ c[5] }}</td>
+          <td>{{ c[6] }}</td>  <!-- plano_nome -->
+          <td>{{ c[7] }}</td>   
+          <td>
+            <form method="POST" action="/excluir_confirmado" style="display:inline;">
+                <input type="hidden" name="id" value="{{ c[0] }}">
+                <button type="submit" class="recusar-btn" onclick="return confirm('Deseja realmente excluir este agendamento confirmado?')">Excluir</button>
+              </form>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="mensagem">Agenda vazia.</p>
+  {% endif %}
+
+<script>
+  function mostrarFormulario() {
+    document.getElementById("formPaciente").style.display = "block";
+    document.getElementById("btnAdicionarPaciente").style.display = "none";
+  }
+</script>
+
+
 </body>
 </html>

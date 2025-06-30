@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Agendar Consulta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e0f7e9;
+      padding: 30px;
+    }
+    h1 { text-align: center; color: #2e7d32; }
+    form {
+      background-color: white;
+      max-width: 600px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select {
+      width: 100%; padding: 10px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px; background-color: #4CAF50; color: white;
+      border: none; padding: 12px; font-size: 16px; width: 100%;
+      border-radius: 5px; cursor: pointer;
+    }
+    .erro { color: red; text-align: center; margin-top: 15px; }
+    .sucesso { color: green; text-align: center; margin-top: 15px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Agendar Consulta</h1>
+  <form method="POST" action="/agendar">
+    <label for="data">Escolha a data:</label>
+    <input type="date" id="data" name="data" required min="{{ data_minima }}">
+
+    <div id="horario-box" class="hidden">
+      <label for="hora">Horário disponível:</label>
+      <select id="hora" name="hora" required></select>
+    </div>
+
+    <label for="nome">Nome completo:</label>
+    <input type="text" id="nome" name="nome" required>
+    <label for="cpf">CPF:</label>
+    <input type="text" id="cpf" name="cpf" required>
+    <label for="telefone">Telefone:</label>
+    <input type="tel" id="telefone" name="telefone" required>
+
+    
+
+
+
+
+
+
+
+    <button type="submit">Solicitar Agendamento</button>
+
+    {% if sucesso %}
+      <div class="sucesso">{{ sucesso }}</div>
+    {% endif %}
+    {% if erro %}
+      <div class="erro">{{ erro }}</div>
+    {% endif %}
+  </form>
+
+  <script>
+    const diasBloqueados = {{ dias_bloqueados_json|safe }};
+    const agenda = {{ agenda_json|safe }};
+    const horariosOcupados = {{ horarios_ocupados_json|safe }};
+    const duracao = Number({{ duracao }});  // ← Garante número
+
+    function normalizarDiaSemana(str) {
+      return str.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace('-feira','')
+        .replace('feira','')
+        .toLowerCase();
+    }
+
+    const dataInput = document.getElementById("data");
+    const horarioBox = document.getElementById("horario-box");
+    const horarioSelect = document.getElementById("hora");
+
+    function atualizarHorarios() {
+      const v = dataInput.value;
+      if (!v || diasBloqueados.includes(v)) {
+        horarioBox.classList.add("hidden");
+        horarioSelect.innerHTML = "";
+        return;
+      }
+      const dataObj = new Date(v + 'T00:00:00');
+      const diaSemanaRaw = dataObj.toLocaleDateString("pt-BR", { weekday: 'long' });
+      const diaSemana = normalizarDiaSemana(diaSemanaRaw);
+      const blocos = agenda[diaSemana];
+      const duracaoMin = duracao || 30;
+      const horarios = [];
+      if (blocos) {
+        ["manha","tarde","noite"].forEach(turno => {
+          if (blocos[turno]) {
+            const partes = blocos[turno].split("-").map(p=>p.trim());
+            if (partes.length===2) {
+              let [ini,fim]=partes.map(p=>p.trim());
+              let [hi,mi]=ini.split(":").map(Number);
+              let [hf,mf]=fim.split(":").map(Number);
+              let iniMin=hi*60+mi, fimMin=hf*60+mf;
+              while(iniMin+duracaoMin<=fimMin){
+                let h=String(Math.floor(iniMin/60)).padStart(2,"0");
+                let m=String(iniMin%60).padStart(2,"0");
+                let horaTxt=`${h}:${m}`;
+                if(!horariosOcupados[v]||!horariosOcupados[v].includes(horaTxt)){
+                  horarios.push(horaTxt);
+                }
+                iniMin+=duracaoMin;
+              }
+            }
+          }
+        });
+      }
+      if(horarios.length>0){
+        horarioSelect.innerHTML=horarios.map(h=>`<option value="${h}">${h}</option>`).join("");
+        horarioBox.classList.remove("hidden");
+      } else {
+        horarioBox.classList.add("hidden");
+        horarioSelect.innerHTML="";
+        alert("Não há horários disponíveis neste dia.");
+      }
+    }
+
+    dataInput.setAttribute("min","{{ data_minima }}");
+    dataInput.addEventListener("change",atualizarHorarios);
+    dataInput.addEventListener("input",atualizarHorarios);
+    document.querySelector("form").addEventListener("submit",function(e){
+      if(horarioSelect.options.length===0||horarioSelect.value===""){
+        e.preventDefault();
+        alert("Selecione data e horário disponíveis.");
+      }
+    });
+  </script>
+</body>
+</html>
+
+

@@ -2,14 +2,13 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>PsiconutriSaúde</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       margin: 0;
     }
-
     header {
       background: rgb(209, 223, 209);
       padding: 10px 20px;
@@ -17,22 +16,9 @@
       align-items: center;
       justify-content: space-between;
     }
-
-    .logo {
-      display: flex;
-      align-items: center;
-    }
-
     .logo img {
       height: 100px;
-      margin-right: 15px;
     }
-
-    .titulo {
-      font-size: 24px;
-      color: #4CAF50;
-    }
-
     .login-box {
       background: white;
       padding: 10px;
@@ -40,7 +26,6 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 180px;
     }
-
     .login-box input {
       background-color: #fffacd;
       border: 1px solid #ccc;
@@ -49,7 +34,6 @@
       width: 100%;
       box-sizing: border-box;
     }
-
     .login-box button {
       background-color: #eee;
       border: 1px solid #aaa;
@@ -57,148 +41,133 @@
       width: 100%;
       cursor: pointer;
     }
-
     .login-box button:hover {
       background-color: #ddd;
     }
-
-    .login-container {
-      margin-right: 10px;
-    }
-
-
-
     .apresentacao {
       background: white;
       text-align: center;
-      padding: 30px 20px 10px 20px;
+      padding: 30px 20px 10px;
       font-size: 18px;
       color: #333;
       line-height: 1.6;
     }
-
-
-
-
-    /* Área das divisões inferiores */
     .conteudo {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
+      gap: 40px;
       padding: 40px 20px;
       background: white;
+      flex-wrap: wrap;
     }
-
     .coluna {
-      width: 45%;
+      flex: 1;
+      max-width: 400px;
       text-align: center;
     }
-
-    .coluna img {
+    .coluna h2 {
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    .botoes-sociais {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+    .botoes-sociais img {
+      width: 60px;
+      cursor: pointer;
+    }
+    .btn-agendar {
+      background: linear-gradient(to bottom right, #4CAF50, #2e7d32);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: transform 0.2s;
+    }
+    .btn-agendar:hover {
+      transform: scale(1.05);
+    }
+    .coluna img.perfil {
       width: 100%;
       max-width: 300px;
       border-radius: 8px;
       margin-bottom: 10px;
     }
-
-    .coluna h2 {
-      color: #4CAF50;
+    .coluna p {
+      font-size: 14px;
+      margin: 0 20px 20px;
     }
-
-
-
-    .whatsapp-link img {
-      width: 80px;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-
-
-
-
-
-
-
-
-
   </style>
 </head>
 <body>
   <header>
     <div class="logo">
-      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
-      
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo PsiconutriSaúde">
     </div>
-    <div class="login-container">
-      <div class="login-box">
-        <form method="POST">
-          <input type="text" name="usuario" placeholder="Usuário" required>
-          <input type="password" name="senha" placeholder="Senha" required>
-          <button type="submit">Entrar</button>
-        </form>
-        {% if erro %}
-          <p style="color: red">{{ erro }}</p>
-        {% endif %}
-      </div>
+    <div class="login-box">
+      <form method="POST">
+        <input type="text" name="usuario" placeholder="Usuário" required>
+        <input type="password" name="senha" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+      </form>
+      {% if erro %}
+        <p style="color: red;">{{ erro }}</p>
+      {% endif %}
     </div>
   </header>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   <div class="apresentacao">
     <p>
       A <strong>PsiconutriSaúde</strong> foi constituída com a finalidade de prestar um atendimento de excelência, humanizado e acolhedor.
     </p>
-
-
-
-
   </div>
 
-
-
-
-
-
-
-
   <div class="conteudo">
+    <!-- Coluna Nutricionista -->
     <div class="coluna">
       <h2>Nutricionista</h2>
-      <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Nutricionista">
-      <p>Rogéria Souza, CRN/MG 34768, pós-graduada em suplementação, fitoterápicos, nutrição esportiva, nutrigenômica e nutrigenética.</p>
-      <a class="whatsapp-link" href="https://wa.me/5533984077015" target="_blank">
-        <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Nutricionista">
-      </a>
-        
-   
-   
-   
-   
-   
+      <div class="botoes-sociais">
+        <a href="https://wa.me/5533984077015" target="_blank">
+          <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Nutricionista">
+        </a>
+        <a href="https://www.instagram.com/psiconutri.saude/" target="_blank">
+          <img src="{{ url_for('static', filename='img/instagram.png') }}" alt="Instagram Nutricionista">
+        </a>
+        <a href="{{ url_for('agendar') }}" class="btn-agendar">
+          📅 Agendar
+        </a>
+      </div>
+      <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Rogéria Souza" class="perfil">
+      <p>
+        Rogéria Souza, CRN/MG 34768, pós-graduada em suplementação, fitoterápicos, nutrição esportiva, nutrigenômica e nutrigenética.
+      </p>
     </div>
 
+    <!-- Coluna Psicóloga -->
     <div class="coluna">
       <h2>Psicóloga</h2>
-      <img src="{{ url_for('static', filename='img/psico.jpg') }}" alt="Psicóloga">
+      <div class="botoes-sociais">
+        <a href="https://wa.me/5531888888888" target="_blank">
+          <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Psicóloga">
+        </a>
+        <a href="https://www.instagram.com/psiconutri.saude/" target="_blank">
+          <img src="{{ url_for('static', filename='img/instagram.png') }}" alt="Instagram Psicóloga">
+        </a>
+        <a href="#" onclick="alert('Agenda da psicóloga em construção.')" class="btn-agendar">
+          📅 Agendar
+        </a>
+      </div>
+      <img src="{{ url_for('static', filename='img/psico.jpg') }}" alt="Psicóloga em construção" class="perfil">
       <p>Em construção!</p>
-      <a class="whatsapp-link" href="https://wa.me/5531888888888" target="_blank">
-        <img src="{{ url_for('static', filename='img/whatsapp.png') }}" alt="WhatsApp Psicóloga">
-      </a>
-
-
-
     </div>
   </div>
 </body>

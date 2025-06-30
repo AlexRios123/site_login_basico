@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Solicitação Enviada</title>
+  <meta http-equiv="refresh" content="10; url={{ url_for('login') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e0f7e9;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .mensagem {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+    .mensagem h2 {
+      color: #2e7d32;
+      margin-bottom: 20px;
+    }
+    .mensagem p {
+      color: #444;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="mensagem">
+    <h2>Solicitação enviada! Receberá uma mensagem de confirmação pelo WhatsApp, qualquer dúvida entre em contato.</h2>
+    <p>Você será redirecionado para a página de login.</p>
+    <p><small>Se não for redirecionado em 10 segundos, <a href="{{ url_for('login') }}">clique aqui</a>.</small></p>
+  </div>
+  <script>
+    setTimeout(function() {
+      window.location.href = "{{ url_for('login') }}";
+    }, 10000);
+  </script>
+</body>
+</html>
