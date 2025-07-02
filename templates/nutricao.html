@@ -243,6 +243,60 @@
     <p class="mensagem">Agenda vazia.</p>
   {% endif %}
 
+
+
+    <hr>
+<h2 style="text-align:center;">Gerenciar Acesso do Paciente</h2>
+
+
+
+
+<!-- Formulário para gerar chave -->
+<h2>Gerar Chave de Acesso</h2>
+<form method="POST" action="/nutricao_painel" style="text-align:center; margin-bottom:20px;">
+  <input type="text" name="chave" placeholder="CPF ou código do paciente" required>
+  <select name="gerado_por" required>
+    <option value="Nutricionista">Nutricionista</option>
+    <option value="Psicóloga">Psicóloga</option>
+  </select>
+  <button type="submit">Adicionar Chave</button>
+</form>
+
+<h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
+{% if acessos %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Chave</th>
+        <th>Gerado por</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for acesso in acessos %}
+        <tr>
+          <td>{{ acesso[0] }}</td>
+          <td>{{ acesso[1] }}</td>
+          <td>{{ acesso[2] }}</td>
+          <td>
+            <form method="POST" action="/excluir_chave" onsubmit="return confirm('Confirmar exclusão?')">
+              <input type="hidden" name="id" value="{{ acesso[0] }}">
+              <button type="submit" style="background:red; color:white;">Excluir</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="text-align:center;">Nenhuma chave cadastrada.</p>
+{% endif %}
+
+
+
+
+
 <script>
   function mostrarFormulario() {
     document.getElementById("formPaciente").style.display = "block";

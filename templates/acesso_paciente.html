@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Acesso do Paciente</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e8f5e9;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    h1 {
+      color: #2e7d32;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 15px;
+      width: 300px;
+      max-width: 90%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bem-vindo à janela de acesso ao paciente</h1>
+  <p>Por favor, insira o número da sua chave de acesso para continuar.</p>
+  <form method="POST" action="/verificar_chave">
+    <input type="text" name="chave" placeholder="Digite sua chave de acesso" required>
+    <br>
+    <button type="submit">Entrar</button>
+  </form>
+</body>
+</html>
