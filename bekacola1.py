@@ -112,7 +112,13 @@ def criar_banco():
 
 
 
-
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ferias_nutricionista (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_inicio TEXT,
+                data_fim TEXT
+            )
+        """)
 
 
 
@@ -158,7 +164,8 @@ def agenda_nutri():
     # Carrega planos nutricionais (NOVO)
     cursor.execute("SELECT * FROM planos_nutricionais ORDER BY id DESC")
     planos = cursor.fetchall()
-
+    cursor.execute("SELECT * FROM ferias_nutricionista ORDER BY data_inicio")
+    ferias = cursor.fetchall()
     
     
     
@@ -186,7 +193,9 @@ def agenda_nutri():
                            excluir_sabado=excluir_sabado,
                            excluir_domingo=excluir_domingo,
                            duracao=duracao,
-                           planos=planos)
+                           
+                           planos=planos,
+                           ferias=ferias)
                            
 
 @app.route("/salvar_agenda", methods=["POST"])
@@ -334,6 +343,22 @@ def agendar():
     data_minima = daqui_48h.date().isoformat()
     data_maxima = daqui_20d.date().isoformat()
 
+
+    
+    
+    
+    # Carrega períodos de férias
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT data_inicio, data_fim FROM ferias_nutricionista")
+    periodos_ferias = cursor.fetchall()
+    conn.close()
+
+
+
+
+
+
     # 2) Carrega agenda e duração do banco
     def carregar_agenda():
         conn   = sqlite3.connect(DB_PATH)
@@ -392,16 +417,31 @@ def agendar():
     ocupados = horarios_ocupados()
 
     # 4) Calcula dias bloqueados (sem agenda, fim de semana, feriados ou sem slots)
-    def dias_sem_agenda(agenda, feriados, ocupados, duracao):
+    def dias_sem_agenda(agenda, feriados, ocupados, duracao, periodos_ferias):
         bloqueados = []
         inicio     = date.today() + timedelta(days=2)
+        
+        # Bloquear dias de férias
+        dias_ferias = set()
+        for ini, fim in periodos_ferias:
+            try:
+                d_ini = datetime.strptime(ini, "%Y-%m-%d").date()
+                d_fim = datetime.strptime(fim, "%Y-%m-%d").date()
+                delta = (d_fim - d_ini).days
+                for i in range(delta + 1):
+                    dias_ferias.add((d_ini + timedelta(days=i)).isoformat())
+            except:
+                continue
+        
+        
+        
         for i in range(60):
             dia   = inicio + timedelta(days=i)
             dstr  = dia.isoformat()
             wd    = dia.weekday()
             chave = ["segunda", "terca", "quarta", "quinta", "sexta"][wd] if wd < 5 else None
 
-            if wd > 4 or dstr in feriados or chave not in agenda:
+            if wd > 4 or dstr in feriados or dstr in dias_ferias or chave not in agenda:
                 bloqueados.append(dstr)
             else:
                 blocos = agenda[chave]
@@ -423,8 +463,7 @@ def agendar():
 
         return bloqueados
 
-    dias_bloqueados = dias_sem_agenda(agenda, feriados_str, ocupados, duracao)
-
+    dias_bloqueados = dias_sem_agenda(agenda, feriados_str, ocupados, duracao, periodos_ferias)
     # 5) Calcula dias disponíveis (entre 48h e 20d, sem os bloqueados)
     inicio_data = date.today() + timedelta(days=2)
     fim_data    = daqui_20d.date()
@@ -462,6 +501,24 @@ def agendar():
         if not all([nome, cpf, tel, data_escolhida, hora_escolhida]):
             return render_template("agendamento.html",
                 erro="Preencha todos os campos.", **context)
+            
+            
+        escolha_dt = datetime.strptime(data_escolhida, "%Y-%m-%d")
+        if escolha_dt < daqui_48h:
+            return render_template("agendamento.html",
+                erro="❌ A data escolhida está a menos de 48 horas. Entre em contato pelo WhatsApp para verificar disponibilidade.", **context)
+                    
+        if escolha_dt.date() > daqui_20d.date():
+            return render_template("agendamento.html",
+            erro="❌ A data escolhida está além do limite de 20 dias. Entre em contato pelo WhatsApp para ajuda.", **context)    
+        if data_escolhida not in dias_disponiveis:
+            return render_template("agendamento.html",
+                erro="❌ A data selecionada está indisponível por motivo de agenda, feriado ou férias. Entre em contato via WhatsApp.", **context)
+        
+        if not hora_escolhida:
+            return render_template("agendamento.html",
+                erro="❌ Nenhum horário foi selecionado para essa data. Contate-nos por WhatsApp para verificar alternativas.", **context)
+            
 
         # 6b) Verifica antecedência de 48h
         escolha_dt = datetime.strptime(data_escolhida, "%Y-%m-%d")
@@ -499,7 +556,7 @@ def agendar():
         return render_template("agendamento_enviado.html", **context)
 
     # 7) Se não for POST, cai aqui e renderiza a tela de agendamento
-    return render_template("agendamento.html", **context)
+    return render_template("agendamento.html", erro="Preencha todos os campos.", **context)
 
         
     
@@ -533,6 +590,26 @@ def excluir_confirmado():
 
 
 
+@app.route("/salvar_paciente_confirmado", methods=["POST"])
+def salvar_paciente_confirmado():
+    nome = request.form.get("nome")
+    cpf = request.form.get("cpf")
+    telefone = request.form.get("telefone")
+    data = request.form.get("data")
+    hora = request.form.get("hora")
+    plano = request.form.get("plano")
+    tipo = request.form.get("tipo")
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO agendamentos_confirmados (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (nome, cpf, telefone, data, hora, plano, tipo))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("nutricao_painel"))
 
 
 
@@ -654,32 +731,35 @@ planos = carregar_planos()
 
 
 
+@app.route("/salvar_ferias", methods=["POST"])
+def salvar_ferias():
+    data_inicio = request.form.get("ferias_inicio")
+    data_fim = request.form.get("ferias_fim")
 
-
-
-
-
-
-@app.route("/salvar_paciente_confirmado", methods=["POST"])
-def salvar_paciente_confirmado():
-    nome = request.form.get("nome")
-    cpf = request.form.get("cpf")
-    telefone = request.form.get("telefone")
-    data = request.form.get("data")
-    hora = request.form.get("hora")
-    plano = request.form.get("plano")
-    tipo = request.form.get("tipo")
-
-    if nome and cpf and telefone and data and hora:
+    if data_inicio and data_fim:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO agendamentos_confirmados (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (nome, cpf, telefone, data, hora, plano, tipo))
+        cursor.execute("INSERT INTO ferias_nutricionista (data_inicio, data_fim) VALUES (?, ?)", (data_inicio, data_fim))
         conn.commit()
         conn.close()
-    return redirect(url_for("nutricao_painel"))
+
+    return redirect(url_for("agenda_nutri"))
+
+
+@app.route("/excluir_ferias", methods=["POST"])
+def excluir_ferias():
+    id_ = request.form.get("id")
+    if id_:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM ferias_nutricionista WHERE id=?", (id_,))
+        conn.commit()
+        conn.close()
+    return redirect(url_for("agenda_nutri"))
+
+
+
+
 
 
 

@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
+
+from functools import wraps
+
 import os
 import sqlite3
 import json
@@ -11,7 +14,7 @@ from datetime import datetime as dt
  
  
 app = Flask(__name__)
-
+app.secret_key = 'uma_chave_secreta_segura'  # Troque por uma string segura
 # Configurações
 USUARIO = "alex"
 SENHA = "123"
@@ -25,6 +28,13 @@ DB_PATH = os.path.join(BASE_DIR, "agenda_nutri.db")
 
 
 
+def login_requerido(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logado'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 
@@ -132,11 +142,23 @@ atualizar_banco_agendamentos()
 def login():
     if request.method == "POST":
         if request.form.get("usuario") == USUARIO and request.form.get("senha") == SENHA:
+            session['logado'] = True
             return redirect(url_for("bemvindo"))
         return render_template("login.html", erro="Usuário ou senha incorretos.")
     return render_template("login.html")
 
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+
+
+
 @app.route("/bemvindo")
+@login_requerido
 def bemvindo():
     return render_template("bemvindo.html")
 
@@ -155,6 +177,7 @@ def login_psico():
     return render_template("bemvindo.html", erro_psico="Usuário ou senha inválidos")
 
 @app.route("/agenda")
+@login_requerido
 def agenda_nutri():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -199,6 +222,7 @@ def agenda_nutri():
                            
 
 @app.route("/salvar_agenda", methods=["POST"])
+@login_requerido
 def salvar_agenda():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -266,6 +290,8 @@ def nutricao_painel():
     return render_template("nutricao.html", pendentes=pendentes, confirmados=confirmados)
 
 @app.route("/confirmar_agendamento", methods=["POST"])
+
+@login_requerido
 def confirmar_agendamento():
     id_ = request.form.get("id")
     if not id_:
@@ -562,6 +588,7 @@ def agendar():
     
 
 @app.route("/recusar_agendamento", methods=["POST"])
+@login_requerido
 def recusar_agendamento():
     id_ = request.form.get("id")
     if id_:
@@ -577,6 +604,7 @@ def recusar_agendamento():
 
 
 @app.route("/excluir_confirmado", methods=["POST"])
+@login_requerido
 def excluir_confirmado():
     id_ = request.form.get("id")
     if id_:
