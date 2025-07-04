@@ -521,6 +521,15 @@ def agendar():
         hora_escolhida = request.form.get("hora")
         plano_id = request.form.get("plano_id")
         tipo_atendimento = request.form.get("tipo_atendimento")
+        
+        # ADICIONE AQUI
+        print("Recebido no backend:")
+        print("Nome:", nome)
+        print("Data:", data_escolhida)
+        print("Hora:", hora_escolhida)
+            
+            
+        
 
         # 6a) Campos obrigatórios
         if not all([nome, cpf, tel, data_escolhida, hora_escolhida]):
