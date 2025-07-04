@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
+
+from functools import wraps
+
 import os
 import sqlite3
 import json
@@ -11,7 +14,7 @@ from datetime import datetime as dt
  
  
 app = Flask(__name__)
-
+app.secret_key = 'uma_chave_secreta_segura'  # Troque por uma string segura
 # Configurações
 USUARIO = "alex"
 SENHA = "123"
@@ -25,6 +28,13 @@ DB_PATH = os.path.join(BASE_DIR, "agenda_nutri.db")
 
 
 
+def login_requerido(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logado'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 
@@ -122,6 +132,17 @@ def criar_banco():
 
 
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS acessos_pacientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chave TEXT,
+                gerado_por TEXT
+            )
+        """)
+
+
+
+
 
 
 
@@ -132,11 +153,23 @@ atualizar_banco_agendamentos()
 def login():
     if request.method == "POST":
         if request.form.get("usuario") == USUARIO and request.form.get("senha") == SENHA:
+            session['logado'] = True
             return redirect(url_for("bemvindo"))
         return render_template("login.html", erro="Usuário ou senha incorretos.")
     return render_template("login.html")
 
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+
+
+
 @app.route("/bemvindo")
+@login_requerido
 def bemvindo():
     return render_template("bemvindo.html")
 
@@ -155,6 +188,7 @@ def login_psico():
     return render_template("bemvindo.html", erro_psico="Usuário ou senha inválidos")
 
 @app.route("/agenda")
+@login_requerido
 def agenda_nutri():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -199,6 +233,7 @@ def agenda_nutri():
                            
 
 @app.route("/salvar_agenda", methods=["POST"])
+@login_requerido
 def salvar_agenda():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -252,20 +287,42 @@ def salvar_agenda():
 
 
 
-@app.route("/nutricao_painel")
+@app.route("/nutricao_painel", methods=["GET", "POST"])
+@login_requerido
 def nutricao_painel():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+
     cursor.execute("DELETE FROM agendamentos_pendentes WHERE datetime(data || ' ' || hora) < datetime('now', '-1 day')")
     cursor.execute("SELECT * FROM agendamentos_pendentes ORDER BY data, hora")
     pendentes = cursor.fetchall()
+
     cursor.execute("SELECT * FROM agendamentos_confirmados ORDER BY data, hora")
     confirmados = cursor.fetchall()
-    conn.commit()
+
+    # Processa nova chave se for POST
+    if request.method == "POST":
+        chave = request.form.get("chave")
+        gerado_por = request.form.get("gerado_por")
+        if chave and gerado_por:
+            cursor.execute("INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, ?)", (chave, gerado_por))
+            conn.commit()
+
+    # Carrega chaves de acesso
+    cursor.execute("SELECT * FROM acessos_pacientes ORDER BY id DESC")
+    acessos = cursor.fetchall()
+
     conn.close()
-    return render_template("nutricao.html", pendentes=pendentes, confirmados=confirmados)
+    return render_template("nutricao.html", pendentes=pendentes, confirmados=confirmados, acessos=acessos)
+
+
+
+
+
 
 @app.route("/confirmar_agendamento", methods=["POST"])
+
+@login_requerido
 def confirmar_agendamento():
     id_ = request.form.get("id")
     if not id_:
@@ -562,6 +619,7 @@ def agendar():
     
 
 @app.route("/recusar_agendamento", methods=["POST"])
+@login_requerido
 def recusar_agendamento():
     id_ = request.form.get("id")
     if id_:
@@ -577,6 +635,7 @@ def recusar_agendamento():
 
 
 @app.route("/excluir_confirmado", methods=["POST"])
+@login_requerido
 def excluir_confirmado():
     id_ = request.form.get("id")
     if id_:
@@ -768,6 +827,132 @@ def excluir_ferias():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route("/chaves_acesso", methods=["GET", "POST"])
+@login_requerido
+def chaves_acesso():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Criar a tabela, se não existir
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS acessos_pacientes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chave TEXT,
+            gerado_por TEXT
+        )
+    """)
+
+    # Inserir nova chave (se POST)
+    if request.method == "POST":
+        chave = request.form.get("chave")
+        gerado_por = request.form.get("gerado_por")
+        if chave and gerado_por:
+            cursor.execute("INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, ?)", (chave, gerado_por))
+            conn.commit()
+
+    # Buscar todos os acessos para exibir
+    cursor.execute("SELECT * FROM acessos_pacientes ORDER BY id DESC")
+    acessos = cursor.fetchall()
+    conn.close()
+    return render_template("chaves_acesso.html", acessos=acessos)
+
+
+@app.route("/excluir_chave", methods=["POST"])
+@login_requerido
+def excluir_chave():
+    try:
+        id_ = request.form.get("id")
+        print("ID recebido para exclusão:", id_)
+        if id_:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM acessos_pacientes WHERE id=?", (int(id_),))
+            conn.commit()
+            conn.close()
+        else:
+            print("⚠️ Nenhum ID recebido.")
+    except Exception as e:
+        print("❌ Erro ao excluir chave:", e)
+    return redirect(url_for("nutricao_painel"))
+
+
+
+
+@app.route("/acesso_paciente")
+def acesso_paciente():
+    return render_template("acesso_paciente.html")
+
+
+
+
+
+
+
+@app.route("/verificar_chave", methods=["POST"])
+def verificar_chave():
+    chave = request.form.get("chave")
+
+    if not chave:
+        return "Chave não fornecida", 400
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT gerado_por FROM acessos_pacientes WHERE chave = ?", (chave,))
+    resultados = cursor.fetchall()
+    conn.close()
+
+    if not resultados:
+        return "❌ Chave inválida ou não encontrada.", 404
+
+    tipos = set([r[0] for r in resultados])
+
+    if tipos == {"Nutricionista"}:
+        return redirect(url_for("paciente_nutricionista"))
+    elif tipos == {"Psicóloga"}:
+        return redirect(url_for("paciente_psicologia"))
+    elif "Nutricionista" in tipos and "Psicóloga" in tipos:
+        # Renderiza um HTML que abre duas abas
+        return render_template("abrir_duas_abas.html")
+
+
+
+
+
+@app.route("/pacientenutricionista")
+def paciente_nutricionista():
+    return render_template("pacientenutricionista.html")
+
+@app.route("/pacientepsicologia")
+def paciente_psicologia():
+    return render_template("pacientepsicologia.html")
 
 
 

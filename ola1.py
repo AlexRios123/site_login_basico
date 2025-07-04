@@ -320,38 +320,6 @@ def nutricao_painel():
 
 
 
-@app.route("/confirmar_agendamento", methods=["POST"])
-
-@login_requerido
-def confirmar_agendamento():
-    id_ = request.form.get("id")
-    if not id_:
-        return redirect(url_for("nutricao_painel"))
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM agendamentos_pendentes WHERE id=?", (id_,))
-    agendamento = cursor.fetchone()
-
-    if agendamento:
-        cursor.execute("""
-            INSERT INTO agendamentos_confirmados (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, agendamento[1:])  # copia todos os campos menos o ID
-            
-        
-        
-        
-        
-        
-        
-        cursor.execute("DELETE FROM agendamentos_pendentes WHERE id=?", (id_,))
-        conn.commit()
-    conn.close()
-
-    return redirect(url_for("nutricao_painel"))
-
-
 
 
 
@@ -953,6 +921,87 @@ def paciente_nutricionista():
 @app.route("/pacientepsicologia")
 def paciente_psicologia():
     return render_template("pacientepsicologia.html")
+
+
+
+
+
+from flask import render_template_string, request, redirect, url_for
+import sqlite3
+import urllib.parse
+
+@app.route("/confirmar_agendamento", methods=["POST"])
+@login_requerido
+def confirmar_agendamento():
+    id_ = request.form.get("id")
+    if not id_:
+        return redirect(url_for("nutricao_painel"))
+
+    # Banco
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM agendamentos_pendentes WHERE id=?", (id_,))
+    agendamento = cursor.fetchone()
+
+    if agendamento:
+        cursor.execute("""
+            INSERT INTO agendamentos_confirmados (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, agendamento[1:])
+        cursor.execute("DELETE FROM agendamentos_pendentes WHERE id=?", (id_,))
+        conn.commit()
+    conn.close()
+
+    # Dados do paciente
+    nome = agendamento[1]
+    telefone = agendamento[3].replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    telefone_formatado = f"55{telefone}" if not telefone.startswith("55") else telefone
+    data = agendamento[4]
+    hora = agendamento[5]
+    mensagem = f"Olá {nome}, seu agendamento foi confirmado para o dia {data} às {hora}. Atenciosamente, PsiconutriSaúde. Até breve!"
+    mensagem_encoded = urllib.parse.quote(mensagem)
+
+    # URL que funciona para celular e PC
+    whatsapp_url = f"https://wa.me/{telefone_formatado}?text={mensagem_encoded}"
+
+    # Retorna HTML com JavaScript que abre em nova aba
+    return render_template_string(f"""
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+      <meta charset="UTF-8">
+      <title>WhatsApp</title>
+      <script>
+        window.onload = function() {{
+          window.open("{whatsapp_url}", "_blank");
+          setTimeout(function() {{
+            window.location.href = "{url_for('nutricao_painel')}";
+          }}, 2000);
+        }};
+      </script>
+    </head>
+    <body>
+      <p>Agendamento confirmado! Abrindo WhatsApp em nova aba...</p>
+    </body>
+    </html>
+    """)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
