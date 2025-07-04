@@ -8,7 +8,7 @@ import json
 import holidays
 from datetime import datetime, timedelta, date
 from datetime import datetime as dt
- 
+import re
  
  
  
@@ -517,17 +517,17 @@ def agendar():
         nome           = request.form.get("nome")
         cpf            = request.form.get("cpf")
         tel            = request.form.get("telefone")
+        if not re.fullmatch(r"55\d{10,11}", tel):
+            return render_template("agendamento.html",
+                erro="❌ Telefone inválido. Use o formato 55DDXXXXXXXXX (ex: 5531999998888).", **context)
+                
+        
         data_escolhida = request.form.get("data")
         hora_escolhida = request.form.get("hora")
         plano_id = request.form.get("plano_id")
         tipo_atendimento = request.form.get("tipo_atendimento")
         
-        # ADICIONE AQUI
-        print("Recebido no backend:")
-        print("Nome:", nome)
-        print("Data:", data_escolhida)
-        print("Hora:", hora_escolhida)
-            
+       
             
         
 

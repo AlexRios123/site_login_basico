@@ -162,6 +162,47 @@
   {% endif %}
 
   <hr>
+  <div style="text-align:center; margin-top:20px;">
+    <button id="btnAdicionarPaciente" onclick="mostrarFormulario()" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+      Adicionar Paciente
+    </button>
+  </div>
+
+    <!-- NOVO formulário oculto -->
+  <div id="formPaciente" style="display:none; margin: 20px auto; max-width: 600px;">
+    <form method="POST" action="/salvar_paciente_confirmado" style="background:white; padding: 20px; border-radius: 10px;">
+      <label>Nome:</label>
+      <input type="text" name="nome" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>CPF:</label>
+      <input type="text" name="cpf" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Telefone:</label>
+      <input type="text" name="telefone" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Data:</label>
+      <input type="date" name="data" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Hora:</label>
+      <input type="time" name="hora" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Plano:</label>
+      <input type="text" name="plano" style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+
+      <label>Tipo:</label>
+      <select name="tipo" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <option value="Presencial">Presencial</option>
+        <option value="Online">Online</option>
+      </select>
+
+      <button type="submit" style="background-color: #4CAF50; color:white; padding: 10px 20px; border:none; border-radius: 5px;">Salvar</button>
+    </form>
+  </div>
+
+
+
+
+
   <h2>Agenda Confirmada</h2>
   {% if confirmados %}
     <table>
@@ -201,6 +242,68 @@
   {% else %}
     <p class="mensagem">Agenda vazia.</p>
   {% endif %}
+
+
+
+    <hr>
+<h2 style="text-align:center;">Gerenciar Acesso do Paciente</h2>
+
+
+
+
+<!-- Formulário para gerar chave -->
+<h2>Gerar Chave de Acesso</h2>
+<form method="POST" action="/nutricao_painel" style="text-align:center; margin-bottom:20px;">
+  <input type="text" name="chave" placeholder="CPF ou código do paciente" required>
+  <select name="gerado_por" required>
+    <option value="Nutricionista">Nutricionista</option>
+    <option value="Psicóloga">Psicóloga</option>
+  </select>
+  <button type="submit">Adicionar Chave</button>
+</form>
+
+<h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
+{% if acessos %}
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Chave</th>
+        <th>Gerado por</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for acesso in acessos %}
+        <tr>
+          <td>{{ acesso[0] }}</td>
+          <td>{{ acesso[1] }}</td>
+          <td>{{ acesso[2] }}</td>
+          <td>
+            <form method="POST" action="/excluir_chave" onsubmit="return confirm('Confirmar exclusão?')">
+              <input type="hidden" name="id" value="{{ acesso[0] }}">
+              <button type="submit" style="background:red; color:white;">Excluir</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="text-align:center;">Nenhuma chave cadastrada.</p>
+{% endif %}
+
+
+
+
+
+<script>
+  function mostrarFormulario() {
+    document.getElementById("formPaciente").style.display = "block";
+    document.getElementById("btnAdicionarPaciente").style.display = "none";
+  }
+</script>
+
 
 </body>
 </html>
