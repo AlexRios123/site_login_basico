@@ -36,12 +36,13 @@
 </head>
 <body>
   <h1>Agendar Consulta</h1>
+  <h1>***Se não aparecer a lista de horários, selecione outro dia disponível. Use o formato 55DDXXXXXXXXX (ex: 5531999998888)***</h1>
   <form method="POST" action="/agendar">
     <label for="data">Escolha a data:</label>
     <input type="date" id="data" name="data" required min="{{ data_minima }}" max="{{ data_maxima }}">
 
     <div class="info" style="margin-top:8px; font-size:0.9em; color:#555;">
-        Se não aparecer a lista de horários, selecione outro dia disponível.<br>
+       
         <strong>Datas disponíveis:</strong>
         {% if dias_disponiveis %}
             {% for d in dias_disponiveis %}
@@ -66,8 +67,8 @@
     <input type="text" id="nome" name="nome" required>
     <label for="cpf">CPF:</label>
     <input type="text" id="cpf" name="cpf" required>
-    <label for="telefone">Telefone:</label>
-    <input type="tel" id="telefone" name="telefone" required>
+    <label for="telefone">Telefone (formato: 55DDXXXXXXXXX):</label>
+    <input type="tel" id="telefone" name="telefone" required pattern="55\d{10,11}" title="Digite o número no formato: 55DDXXXXXXXXX (ex: 5531998765432)">
 
     <label for="plano_id">Escolha um plano alimentar:</label>
     <select name="plano_id" id="plano_id" required>
@@ -167,8 +168,16 @@
     dataInput.setAttribute("min","{{ data_minima }}");
     dataInput.addEventListener("change",atualizarHorarios);
     dataInput.addEventListener("input",atualizarHorarios);
-    document.querySelector("form").addEventListener("submit",function(e){
-      if(horarioSelect.options.length===0||horarioSelect.value===""){
+    document.querySelector("form").addEventListener("submit", function(e) {
+      const telefone = document.getElementById("telefone").value;
+      const regexTelefone = /^55\d{10,11}$/;
+
+      if (!regexTelefone.test(telefone)) {
+        e.preventDefault();
+        alert("❌ Digite o telefone no formato correto: 55DDXXXXXXXXX.\nExemplo: 5531998765432");
+      }
+
+      if (horarioSelect.options.length === 0 || horarioSelect.value === "") {
         e.preventDefault();
         alert("Selecione data e horário disponíveis.");
       }
