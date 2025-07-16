@@ -2,17 +2,17 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Área da Nutrição</title>
+  <title>Área da Psicologia</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #e0f7e9;
+      background-color: #f3e5f5; /* lilás claro */
       padding: 30px;
       margin: 0;
     }
 
     h1 {
-      color: #2e7d32;
+      color: #6a1b9a;
       text-align: center;
       margin-bottom: 30px;
     }
@@ -33,7 +33,7 @@
     .botoes button {
       padding: 12px 24px;
       font-size: 16px;
-      background-color: #4CAF50;
+      background-color: #8e24aa;
       color: white;
       border: none;
       border-radius: 6px;
@@ -43,7 +43,7 @@
     }
 
     .botoes button:hover {
-      background-color: #45a049;
+      background-color: #6a1b9a;
     }
 
     table {
@@ -60,22 +60,22 @@
     }
 
     thead {
-      background-color: #dcedc8;
+      background-color: #e1bee7; /* cabeçalho roxo claro */
     }
 
     hr {
       border: none;
-      border-top: 2px solid #a5d6a7;
+      border-top: 2px solid #ba68c8;
       margin: 50px 0 20px 0;
     }
 
     h2 {
       text-align: center;
-      color: #2e7d32;
+      color: #6a1b9a;
     }
 
     .confirmar-btn {
-      background-color: #2196F3;
+      background-color: #7e57c2;
       color: white;
       padding: 6px 12px;
       border: none;
@@ -83,7 +83,7 @@
       cursor: pointer;
     }
     .confirmar-btn:hover {
-      background-color: #1976D2;
+      background-color: #5e35b1;
     }
 
     .recusar-btn {
@@ -108,13 +108,16 @@
 </head>
 <body>
 
-  <h1>Área da Nutrição</h1>
+  <h1>Área da Psicologia</h1>
 
   <div class="botoes">
-    <form action="/agenda" method="GET">
+    <form action="/agenda_psicologia" method="GET">
       <button type="submit">Agenda</button>
     </form>
-    <!-- Outros botões podem ser adicionados aqui -->
+
+    <form action="/logout" method="GET">
+      <button type="submit" style="background-color: #d32f2f;">Sair</button>
+    </form>
   </div>
 
   <hr>
@@ -136,21 +139,21 @@
       <tbody>
         {% for row in pendentes %}
           <tr>
-            <td>{{ row[1] }}</td>  <!-- nome -->
-            <td>{{ row[2] }}</td>  <!-- cpf -->
-            <td>{{ row[3] }}</td>  <!-- telefone -->
-            <td>{{ row[4] }}</td>  <!-- data -->
-            <td>{{ row[5] }}</td>  <!-- hora -->
-            <td>{{ row[6] }}</td>  <!-- plano_nome -->
-            <td>{{ row[7] }}</td>  <!-- tipo_atendimento -->
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ row[5] }}</td>
+            <td>{{ row[6] }}</td>
+            <td>{{ row[7] }}</td>
             <td>
-              <form method="POST" action="/confirmar_agendamento">
+              <form method="POST" action="{{ url_for('confirmar_agendamento_psico') }}">
                 <input type="hidden" name="id" value="{{ row[0] }}">
-                <button type="submit">Confirmar</button>
+                <button type="submit" class="confirmar-btn">Confirmar</button>
               </form>
-              <form method="POST" action="/recusar_agendamento">
+              <form method="POST" action="{{ url_for('recusar_agendamento_psico') }}">
                 <input type="hidden" name="id" value="{{ row[0] }}">
-                <button type="submit" style="background:red; color:white;">Recusar</button>
+                <button type="submit" class="recusar-btn">Recusar</button>
               </form>
             </td>
           </tr>
@@ -163,45 +166,48 @@
 
   <hr>
   <div style="text-align:center; margin-top:20px;">
-    <button id="btnAdicionarPaciente" onclick="mostrarFormulario()" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+    <button id="btnAdicionarPaciente" onclick="mostrarFormulario()" style="background-color: #8e24aa; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
       Adicionar Paciente
     </button>
   </div>
 
-    <!-- NOVO formulário oculto -->
   <div id="formPaciente" style="display:none; margin: 20px auto; max-width: 600px;">
-    <form method="POST" action="/salvar_paciente_confirmado" style="background:white; padding: 20px; border-radius: 10px;">
+    <form method="POST"
+          action="{{ url_for('salvar_paciente_confirmado_psico') }}"
+          style="background:white; padding: 20px; border-radius: 10px;">
+      
       <label>Nome:</label>
-      <input type="text" name="nome" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <input type="text" name="nome" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>CPF:</label>
-      <input type="text" name="cpf" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <input type="text" name="cpf" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>Telefone:</label>
-      <input type="text" name="telefone" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <input type="text" name="telefone" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>Data:</label>
-      <input type="date" name="data" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <input type="date" name="data" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>Hora:</label>
-      <input type="time" name="hora" required style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <input type="time" name="hora" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>Plano:</label>
-      <input type="text" name="plano" style="width: 100%; padding: 8px; margin-bottom: 10px;"><br>
+      <!-- name ajustado para “plano” -->
+      <input type="text" name="plano" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
 
       <label>Tipo:</label>
-      <select name="tipo" required style="width: 100%; padding: 8px; margin-bottom: 10px;">
+      <!-- name ajustado para “tipo” -->
+      <select name="tipo" required style="width:100%; padding:8px; margin-bottom:10px;">
         <option value="Presencial">Presencial</option>
         <option value="Online">Online</option>
-      </select>
+      </select><br>
 
-      <button type="submit" style="background-color: #4CAF50; color:white; padding: 10px 20px; border:none; border-radius: 5px;">Salvar</button>
+      <button type="submit"
+              style="background-color:#7b1fa2; color:white; padding:10px 20px; border:none; border-radius:5px;">
+        Salvar
+      </button>
     </form>
   </div>
-
-
-
-
 
   <h2>Agenda Confirmada</h2>
   {% if confirmados %}
@@ -226,15 +232,17 @@
           <td>{{ c[3] }}</td>
           <td>{{ c[4] }}</td>
           <td>{{ c[5] }}</td>
-          <td>{{ c[6] }}</td>  <!-- plano_nome -->
-          <td>{{ c[7] }}</td>   
+          <td>{{ c[6] }}</td>
+          <td>{{ c[7] }}</td>
           <td>
-            <form method="POST" action="/excluir_confirmado" style="display:inline;">
-                <input type="hidden" name="id" value="{{ c[0] }}">
-                <button type="submit" class="recusar-btn" onclick="return confirm('Deseja realmente excluir este agendamento confirmado?')">Excluir</button>
-              </form>
+            <form method="POST" action="{{ url_for('excluir_confirmado_psico') }}" style="display:inline;">
+              <input type="hidden" name="id" value="{{ c[0] }}">
+              <button type="submit" class="recusar-btn"
+                      onclick="return confirm('Deseja realmente excluir este agendamento confirmado?')">
+                Excluir
+              </button>
+            </form>
           </td>
-
         </tr>
         {% endfor %}
       </tbody>
@@ -243,67 +251,52 @@
     <p class="mensagem">Agenda vazia.</p>
   {% endif %}
 
+  <hr>
+  <h2 style="text-align:center;">Gerar Chave de Acesso</h2>
+  <form method="POST" action="/psicologia_painel"
+        style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+    <input type="text" name="chave" placeholder="CPF ou código do paciente" required
+          style="padding: 5px;"/>
+    <button type="submit" style="padding: 6px 12px;">Adicionar Chave</button>
+  </form>
 
-
-    <hr>
-<h2 style="text-align:center;">Gerenciar Acesso do Paciente</h2>
-
-
-
-
-<!-- Formulário para gerar chave -->
-<h2>Gerar Chave de Acesso</h2>
-<form method="POST" action="/nutricao_painel" style="text-align:center; margin-bottom:20px;">
-  <input type="text" name="chave" placeholder="CPF ou código do paciente" required>
-  <select name="gerado_por" required>
-    <option value="Nutricionista">Nutricionista</option>
-    <option value="Psicóloga">Psicóloga</option>
-  </select>
-  <button type="submit">Adicionar Chave</button>
-</form>
-
-<h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
-{% if acessos %}
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Chave</th>
-        <th>Gerado por</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for acesso in acessos %}
+  <h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
+  {% if acessos %}
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Chave</th>
+          <th>Gerado por</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for acesso in acessos %}
         <tr>
           <td>{{ acesso[0] }}</td>
           <td>{{ acesso[1] }}</td>
           <td>{{ acesso[2] }}</td>
           <td>
-            <form method="POST" action="/excluir_chave" onsubmit="return confirm('Confirmar exclusão?')">
+            <form method="POST" action="{{ url_for('excluir_chave_psico') }}">
               <input type="hidden" name="id" value="{{ acesso[0] }}">
               <button type="submit" style="background:red; color:white;">Excluir</button>
             </form>
           </td>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p style="text-align:center;">Nenhuma chave cadastrada.</p>
-{% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="text-align:center;">Nenhuma chave cadastrada.</p>
+  {% endif %}
 
-
-
-
-
-<script>
-  function mostrarFormulario() {
-    document.getElementById("formPaciente").style.display = "block";
-    document.getElementById("btnAdicionarPaciente").style.display = "none";
-  }
-</script>
-
+  <script>
+    function mostrarFormulario() {
+      document.getElementById("formPaciente").style.display = "block";
+      document.getElementById("btnAdicionarPaciente").style.display = "none";
+    }
+  </script>
 
 </body>
 </html>

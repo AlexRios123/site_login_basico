@@ -6,20 +6,16 @@
   <style>
     body {
       font-family: Arial;
-      background-color:rgb(188, 215, 241);
+      background-color: #f0f0f5;
       text-align: center;
       padding-top: 60px;
-    }
-
-    h1 {
-      margin-bottom: 40px;
-      color: #2e7d32;
     }
 
     .box-container {
       display: flex;
       justify-content: center;
       gap: 60px;
+      flex-wrap: wrap;
     }
 
     .box {
@@ -30,12 +26,41 @@
       width: 220px;
     }
 
-    .box h2 {
+    .nutri .box h2 {
       color: #4CAF50;
-      margin-bottom: 10px;
     }
 
-    .box form input, .box form button {
+    .nutri .box form button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .nutri .box form button:hover {
+      background-color: #388E3C;
+    }
+
+    .psico .box h2 {
+      color: #8e24aa;
+    }
+
+    .psico .box form button {
+      background-color: #8e24aa;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .psico .box form button:hover {
+      background-color: #6a1b9a;
+    }
+
+    .box form input {
       width: 100%;
       padding: 8px;
       margin: 6px 0;
@@ -44,50 +69,56 @@
       box-sizing: border-box;
     }
 
-    .box form button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-
-    .box form button:hover {
-      background-color: #45a049;
-    }
-
     .erro {
       color: red;
       margin-top: 8px;
+    }
+
+    img.logo {
+      width: 400px;
+      height: auto;
+      margin-bottom: 30px;
     }
   </style>
 </head>
 <body>
   
-  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="width: 400px; height: auto; margin-bottom: 30px;">
+  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
 
   <div class="box-container">
-    <div class="box">
-      <h2>Nutrição</h2>
-      <form method="POST" action="/nutricao">
-        <input type="text" name="usuario" placeholder="Usuário" required>
-        <input type="password" name="senha" placeholder="Senha" required>
-        <button type="submit">Entrar</button>
-      </form>
-      {% if erro_nutri %}
-        <div class="erro">{{ erro_nutri }}</div>
-      {% endif %}
+    
+    <!-- Nutrição -->
+    <div class="nutri">
+      <div class="box">
+        <h2>Nutrição</h2>
+        <form method="POST" action="/verificar_login">
+          <input type="hidden" name="origem" value="nutricao">
+          <input type="text" name="usuario" placeholder="Usuário" required>
+          <input type="password" name="senha" placeholder="Senha" required>
+          <button type="submit">Entrar</button>
+        </form>
+        {% if erro_nutri %}
+          <div class="erro">{{ erro_nutri }}</div>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="box">
-      <h2>Psicologia</h2>
-      <form method="POST" action="/psicologia">
-        <input type="text" name="usuario" placeholder="Usuário" required>
-        <input type="password" name="senha" placeholder="Senha" required>
-        <button type="submit">Entrar</button>
-      </form>
-      {% if erro_psico %}
-        <div class="erro">{{ erro_psico }}</div>
-      {% endif %}
+    <!-- Psicologia -->
+    <div class="psico">
+      <div class="box">
+        <h2>Psicologia</h2>
+        <form method="POST" action="/verificar_login">
+          <input type="hidden" name="origem" value="psicologia">
+          <input type="text" name="usuario" placeholder="Usuário" required>
+          <input type="password" name="senha" placeholder="Senha" required>
+          <button type="submit">Entrar</button>
+        </form>
+        {% if erro_psico %}
+          <div class="erro">{{ erro_psico }}</div>
+        {% endif %}
+      </div>
     </div>
+
   </div>
 </body>
 </html>

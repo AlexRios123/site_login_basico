@@ -9,6 +9,13 @@
       background: #f5f5f5;
       margin: 0;
     }
+
+
+
+
+
+
+
     header {
       background: rgb(209, 223, 209);
       padding: 10px 20px;
@@ -106,6 +113,31 @@
       font-size: 14px;
       margin: 0 20px 20px;
     }
+
+    .descricao-nutri {
+      font-size: 15px;
+      line-height: 1.8;
+      text-align: left;
+      color: #444;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0 20px;
+    }
+    .descricao-nutri strong {
+      font-size: 18px;
+      color: #2e7d32;
+    }
+    .descricao-nutri .registro {
+      font-size: 14px;
+      color: #666;
+    }
+
+    
+    
+    
+
+
+
+
   </style>
 </head>
 <body>
@@ -160,8 +192,14 @@
         </a>
       </div>
       <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Rogéria Souza" class="perfil">
-      <p>
-        Rogéria Souza, CRN/MG 34768, pós-graduada em suplementação, fitoterápicos, nutrição esportiva, nutrigenômica e nutrigenética.
+      <p class="descricao-nutri">
+        <strong>Rogéria Souza</strong><br>
+        <span class="registro">CRN/MG 34768</span><br>
+        Pós-graduada em:<br>
+        • Suplementação nutricional<br>
+        • Fitoterápicos<br>
+        • Nutrição esportiva<br>
+        • Nutrigenômica e nutrigenética
       </p>
     </div>
 
@@ -175,7 +213,7 @@
         <a href="https://www.instagram.com/psiconutri.saude/" target="_blank">
           <img src="{{ url_for('static', filename='img/instagram.png') }}" alt="Instagram Psicóloga">
         </a>
-        <a href="#" onclick="alert('Agenda da psicóloga em construção.')" class="btn-agendar">
+        <a href="{{ url_for('agendar_psicologia') }}" class="btn-agendar">
           📅 Agendar
         </a>
       </div>

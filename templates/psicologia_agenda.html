@@ -1,17 +1,12 @@
-
-
-from pathlib import Path
-
-agenda_html_final = """
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Agenda - Nutrição</title>
+  <title>Agenda - Psicologia</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #e0f7e9;
+      background-color: #f3e5f5;
       padding: 20px;
       max-width: 800px;
       margin: auto;
@@ -19,7 +14,7 @@ agenda_html_final = """
 
     h1 {
       text-align: center;
-      color: #388e3c;
+      color: #7b1fa2;
     }
 
     form {
@@ -52,7 +47,7 @@ agenda_html_final = """
     }
 
     button {
-      background-color: #4CAF50;
+      background-color: #8e24aa;
       color: white;
       padding: 10px 20px;
       font-size: 16px;
@@ -64,221 +59,146 @@ agenda_html_final = """
     }
 
     button:hover {
-      background-color: #45a049;
+      background-color: #6a1b9a;
     }
-
   </style>
 </head>
 <body>
-  <h1>Agenda da Nutrição</h1>
 
-  <form method="POST" action="/salvar_agenda">
-    {% set dias = [('segunda', 'seg'), ('terca', 'ter'), ('quarta', 'qua'), ('quinta', 'qui'), ('sexta', 'sex')] %}
-    {% for nome, prefixo in dias %}
-    <div class="dia">
-      <label>
-        <input type="checkbox" name="dias" value="{{ nome }}"
-        {% if nome in dados %}checked{% endif %}> {{ nome|capitalize }}-feira
-      </label>
-      <div class="horarios">
-        <input type="text" name="manha_{{ prefixo }}" placeholder="Manhã ex: 08:00-11:30"
-               value="{{ dados[nome]['manha'] if nome in dados else '' }}">
-        <input type="text" name="tarde_{{ prefixo }}" placeholder="Tarde ex: 13:00-17:00"
-               value="{{ dados[nome]['tarde'] if nome in dados else '' }}">
-        <input type="text" name="noite_{{ prefixo }}" placeholder="Noite ex: 18:00-20:00"
-               value="{{ dados[nome]['noite'] if nome in dados else '' }}">
-      </div>
+<h1>Agenda da Psicologia</h1>
+
+<form method="POST" action="/salvar_agenda_psicologia">
+  {% set dias = [('segunda', 'seg'), ('terca', 'ter'), ('quarta', 'qua'), ('quinta', 'qui'), ('sexta', 'sex')] %}
+  {% for nome, prefixo in dias %}
+  <div class="dia">
+    <label>
+      <input type="checkbox" name="dias" value="{{ nome }}"
+      {% if nome in dados %}checked{% endif %}> {{ nome|capitalize }}-feira
+    </label>
+    <div class="horarios">
+      <input type="text" name="manha_{{ prefixo }}" placeholder="Manhã ex: 08:00-11:30" value="{{ dados[nome]['manha'] if nome in dados else '' }}">
+      <input type="text" name="tarde_{{ prefixo }}" placeholder="Tarde ex: 13:00-17:00" value="{{ dados[nome]['tarde'] if nome in dados else '' }}">
+      <input type="text" name="noite_{{ prefixo }}" placeholder="Noite ex: 18:00-20:00" value="{{ dados[nome]['noite'] if nome in dados else '' }}">
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 
-    <div class="opcoes">
-      <label><input type="checkbox" name="excluir_feriados" {% if excluir_feriados %}checked{% endif %}> Excluir feriados nacionais</label>
-    </div>
+  <div class="opcoes">
+    <label><input type="checkbox" name="excluir_feriados" {% if excluir_feriados %}checked{% endif %}> Excluir feriados nacionais</label>
+  </div>
 
-    <div class="opcoes">
-      <label>Duração da consulta:</label>
-      <select name="duracao">
-        {% for i in range(20, 121, 10) %}
-          <option value="{{ i }}" {% if duracao == i %}selected{% endif %}>{{ i }} minutos</option>
-        {% endfor %}
-      </select>
-    </div>
+  <div class="opcoes">
+    <label>Duração da consulta:</label>
+    <select name="duracao">
+      {% for i in range(20, 121, 10) %}
+        <option value="{{ i }}" {% if duracao == i %}selected{% endif %}>{{ i }} minutos</option>
+      {% endfor %}
+    </select>
+  </div>
 
-    <button type="submit">Salvar</button>
-  
-  
-  
-  
-    <!-- Adicione este bloco DENTRO da tag <form> existente -->
-<hr style="margin: 40px 0; border: none; border-top: 2px solid #ccc">
-<h2 style="font-family: Arial, sans-serif; font-size: 20px; color: #2e7d32;">Cadastrar Plano Nutricional</h2>
+  <button type="submit">Salvar</button>
 
-<div class="opcoes">
-  <label style="font-family: Arial, sans-serif; font-size: 12pt;">Nome do plano:</label>
-  <input type="text" name="nome_plano" style="font-family: Arial; font-size: 12pt; width:100%; padding: 8px;">
+  <button type="button" onclick="mostrarFerias()" style="background-color: orange; color: white; margin-left: 10px;">Férias</button>
+</form>
+
+<!-- Férias -->
+<div id="feriasBox" style="display:none; margin-top: 20px;">
+  <form method="POST" action="/salvar_ferias_psicologa" style="background:white; padding: 20px; border-radius: 10px;">
+    <h3 style="color:#7b1fa2;">Definir período de férias</h3>
+    <label>Data início:</label>
+    <input type="date" name="ferias_inicio" required style="width:100%; padding:8px; margin: 5px 0;"><br>
+
+    <label>Data fim:</label>
+    <input type="date" name="ferias_fim" required style="width:100%; padding:8px; margin: 5px 0;"><br>
+
+    <button type="submit" style="background-color: purple; color: white; padding: 10px 20px; margin-top: 10px;">Salvar</button>
+  </form>
 </div>
 
-<div class="opcoes">
-  <label style="font-family: Arial, sans-serif; font-size: 12pt;">Detalhamento:</label><br>
-  <textarea name="descricao_plano" rows="4" style="font-family: Arial; font-size: 12pt; width:100%; padding: 8px;"></textarea>
-</div>
-
-<div class="opcoes">
-  <label style="font-family: Arial, sans-serif; font-size: 12pt;">Valor (R$):</label>
-  <input type="text" name="valor_plano" style="font-family: Arial; font-size: 12pt; width:100%; padding: 8px;">
-</div>
-
-<button type="submit" formaction="/adicionar_plano">Adicionar Plano</button>
-
-<!-- Exibir planos existentes -->
-<hr style="margin: 40px 0; border: none; border-top: 2px solid #ccc">
-<h2 style="font-family: Arial, sans-serif; font-size: 20px; color: #2e7d32;">Planos Cadastrados</h2>
-<table style="font-family: Arial; font-size: 12pt; width:100%; border-collapse: collapse;">
+{% if ferias %}
+<hr>
+<h3 style="color: #7b1fa2;">Férias agendadas</h3>
+<table style="width: 100%; border-collapse: collapse;">
   <thead>
-    <tr style="background-color: #c8e6c9;">
-      <th style="border: 1px solid #ccc; padding: 8px;">Nome</th>
-      <th style="border: 1px solid #ccc; padding: 8px;">Descrição</th>
-      <th style="border: 1px solid #ccc; padding: 8px;">Valor</th>
-      <th style="border: 1px solid #ccc; padding: 8px;">Ações</th>
+    <tr style="background-color: #e1bee7;">
+      <th style="padding: 8px; border: 1px solid #ccc;">Início</th>
+      <th style="padding: 8px; border: 1px solid #ccc;">Fim</th>
+      <th style="padding: 8px; border: 1px solid #ccc;">Ação</th>
     </tr>
   </thead>
   <tbody>
-    {% for plano in planos %}
+    {% for f in ferias %}
     <tr>
-      <td style="border: 1px solid #ccc; padding: 8px;">{{ plano[1] }}</td>
-      <td style="border: 1px solid #ccc; padding: 8px;">{{ plano[2] }}</td>
-      <td style="border: 1px solid #ccc; padding: 8px;">R$ {{ plano[3] }}</td>
-      <td style="border: 1px solid #ccc; padding: 8px;">
-        <form method="POST" action="/excluir_plano" style="display:inline;">
-          <input type="hidden" name="id" value="{{ plano[0] }}">
-          <button type="submit" style="background-color: red; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;"
-                  onclick="return confirm('Deseja realmente excluir este plano?')">
-            Excluir
-          </button>
+      <td style="padding: 8px; border: 1px solid #ccc;">{{ f[1] }}</td>
+      <td style="padding: 8px; border: 1px solid #ccc;">{{ f[2] }}</td>
+      <td style="padding: 8px; border: 1px solid #ccc;">
+        <form method="POST" action="/excluir_ferias_psicologa">
+          <input type="hidden" name="id" value="{{ f[0] }}">
+          <button type="submit" style="background-color: red; color:white; padding: 6px 12px; border: none; border-radius: 5px;"
+                  onclick="return confirm('Deseja excluir este período de férias?')">Excluir</button>
         </form>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  </form>
+<hr style="margin: 40px 0; border: none; border-top: 2px solid #ccc">
+<h2 style="color: #7b1fa2;">Cadastrar Plano Psicológico</h2>
+
+<form method="POST" action="/adicionar_plano_psicologa">
+  <div class="opcoes">
+    <label>Nome do plano:</label>
+    <input type="text" name="nome_plano" style="width:100%; padding:8px;">
+  </div>
+
+  <div class="opcoes">
+    <label>Detalhamento:</label>
+    <textarea name="descricao_plano" rows="4" style="width:100%; padding:8px;"></textarea>
+  </div>
+
+  <div class="opcoes">
+    <label>Valor (R$):</label>
+    <input type="text" name="valor_plano" style="width:100%; padding:8px;">
+  </div>
+
+  <button type="submit">Adicionar Plano</button>
+</form>
+
+<hr>
+<h2 style="color: #7b1fa2;">Planos Cadastrados</h2>
+<table style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr style="background-color: #f3e5f5;">
+      <th style="padding: 8px; border: 1px solid #ccc;">Nome</th>
+      <th style="padding: 8px; border: 1px solid #ccc;">Descrição</th>
+      <th style="padding: 8px; border: 1px solid #ccc;">Valor</th>
+      <th style="padding: 8px; border: 1px solid #ccc;">Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for plano in planos %}
+    <tr>
+      <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[1] }}</td>
+      <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[2] }}</td>
+      <td style="padding: 8px; border: 1px solid #ccc;">R$ {{ plano[3] }}</td>
+      <td style="padding: 8px; border: 1px solid #ccc;">
+        <form action="{{ url_for('excluir_plano_psicologico') }}" method="POST">
+          <input type="hidden" name="id" value="{{ plano[0] }}">
+          <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este plano?')">Excluir</button>
+      </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+  function mostrarFerias() {
+    document.getElementById("feriasBox").style.display = "block";
+  }
+</script>
+
 </body>
 </html>

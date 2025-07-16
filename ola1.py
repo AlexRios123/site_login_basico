@@ -9,6 +9,39 @@ import holidays
 from datetime import datetime, timedelta, date
 from datetime import datetime as dt
 import re
+
+
+#PARA APGAR AO FINAL 
+app = Flask(__name__)
+app.secret_key = 'uma_chave_secreta_segura'
+
+
+# força recarregamento de templates e desativa cache de estáticos em dev
+app.config['TEMPLATES_AUTO_RELOAD']     = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, must-revalidate, max-age=0'
+    return response
+
+
+
+#APAGAR 
+
+
+
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH_NUTRI = os.path.join(BASE_DIR, "agenda_nutri.db")
+DB_PATH_PSICO = os.path.join(BASE_DIR, "agenda_psico.db")
+ 
+ 
+ 
+ 
+ 
+ 
  
  
  
@@ -73,7 +106,37 @@ def atualizar_banco_agendamentos():
 
 
 
-def criar_banco():
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def criar_bancos():
     
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
@@ -141,13 +204,236 @@ def criar_banco():
         """)
 
 
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT UNIQUE NOT NULL,
+                senha TEXT NOT NULL,
+                cargo TEXT NOT NULL CHECK(cargo IN ('Nutricionista', 'Psicóloga'))
+            )
+        """)
+
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("INSERT INTO usuarios (usuario, senha, cargo) VALUES (?, ?, ?)", ("nutri", "123", "Nutricionista"))
+            cursor.execute("INSERT INTO usuarios (usuario, senha, cargo) VALUES (?, ?, ?)", ("psico", "123", "Psicóloga"))
+
+        conn.commit()
+        
+        
+    # ---- Psicóloga banco----
+    with sqlite3.connect(DB_PATH_PSICO) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agenda_psicologa (
+                id INTEGER PRIMARY KEY,
+                dia TEXT, manha TEXT, tarde TEXT, noite TEXT,
+                excluir_feriados BOOLEAN, excluir_sabado BOOLEAN,
+                excluir_domingo BOOLEAN, duracao_consulta INTEGER
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS planos_psicologicos (
+                id INTEGER PRIMARY KEY,
+                nome TEXT NOT NULL,
+                descricao TEXT,
+                valor REAL NOT NULL
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ferias_psicologa (
+                id INTEGER PRIMARY KEY,
+                data_inicio TEXT,
+                data_fim TEXT
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agendamentos_pendentes (
+                id INTEGER PRIMARY KEY,
+                nome TEXT, cpf TEXT, telefone TEXT,
+                data TEXT, hora TEXT,
+                plano_nome TEXT, tipo_atendimento TEXT
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agendamentos_confirmados (
+                id INTEGER PRIMARY KEY,
+                nome TEXT, cpf TEXT, telefone TEXT,
+                data TEXT, hora TEXT,
+                plano_nome TEXT, tipo_atendimento TEXT
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS acessos_pacientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chave TEXT,
+                gerado_por TEXT
+            )
+        """)
+        
+        
+        conn.commit()
+
+            
+        
+DB_PATH       = os.path.join(BASE_DIR, "agenda_nutri.db")
+DB_PATH_PSICO = os.path.join(BASE_DIR, "agenda_psico.db")
+ 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+       
 
 
 
 
 
-criar_banco()
+
+
+
+
+
+@app.route("/psicologia_painel", methods=["GET", "POST"])
+@login_requerido
+def psicologia_painel():
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+
+    # Limpa pendentes muito antigos
+    cursor.execute(
+        "DELETE FROM agendamentos_pendentes "
+        "WHERE datetime(data || ' ' || hora) < datetime('now', '-1 day')"
+    )
+
+    # Busca pendentes e confirmados
+    cursor.execute("SELECT * FROM agendamentos_pendentes ORDER BY data, hora")
+    pendentes = cursor.fetchall()
+    cursor.execute("SELECT * FROM agendamentos_confirmados ORDER BY data, hora")
+    confirmados = cursor.fetchall()
+
+    # Se veio de um POST, insere a chave e redireciona (PRG)
+    if request.method == "POST":
+        chave = request.form.get("chave", "").strip()
+        # aqui não precisamos ler gerado_por do form — sempre 'Psicóloga'
+        if chave:
+            cursor.execute(
+                "INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, 'Psicóloga')",
+                (chave,)
+            )
+            conn.commit()
+        conn.close()
+        return redirect(url_for("psicologia_painel"))
+
+    # GET: carrega só as chaves da Psicóloga
+    cursor.execute("""
+        SELECT * FROM acessos_pacientes
+        WHERE gerado_por = 'Psicóloga'
+        ORDER BY id DESC
+    """)
+    acessos = cursor.fetchall()
+    conn.close()
+
+    return render_template(
+        "psicologia.html",
+        pendentes=pendentes,
+        confirmados=confirmados,
+        acessos=acessos
+    )
+
+@app.route("/excluir_chave_psico", methods=["POST"])
+@login_requerido
+def excluir_chave_psico():
+    id_ = request.form.get("id")
+    if id_:
+        conn   = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM acessos_pacientes WHERE id = ?", (int(id_),))
+        conn.commit()
+        conn.close()
+    return redirect(url_for("psicologia_painel"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+criar_bancos()
 atualizar_banco_agendamentos()
+
+
+
+
+
 # Rotas
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -173,19 +459,43 @@ def logout():
 def bemvindo():
     return render_template("bemvindo.html")
 
-@app.route("/nutricao", methods=["POST", "GET"])
-def login_nutri():
-    if request.method == "POST":
-        if request.form["usuario"] == "adm" and request.form["senha"] == "123":
-            return redirect(url_for("nutricao_painel"))
-        return render_template("bemvindo.html", erro_nutri="Usuário ou senha inválidos")
-    return redirect(url_for("nutricao_painel"))
 
-@app.route("/psicologia", methods=["POST"])
-def login_psico():
-    if request.form["usuario"] == "adm" and request.form["senha"] == "123":
-        return "Área da Psicologia"
-    return render_template("bemvindo.html", erro_psico="Usuário ou senha inválidos")
+
+
+
+@app.route("/verificar_login", methods=["POST"])
+def verificar_login():
+    usuario = request.form["usuario"]
+    senha = request.form["senha"]
+    origem = request.form["origem"]  # vem do formulário: "nutricao" ou "psicologia"
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT cargo FROM usuarios WHERE usuario=? AND senha=?", (usuario, senha))
+    resultado = cursor.fetchone()
+    conn.close()
+
+    if resultado:
+        session["logado"] = True
+        session["usuario"] = usuario
+        session["cargo"] = resultado[0]
+
+        if resultado[0] == "Nutricionista":
+            return redirect(url_for("nutricao_painel"))
+        elif resultado[0] == "Psicóloga":
+            return redirect(url_for("psicologia_painel"))
+    else:
+        erro_msg = "Usuário ou senha inválidos"
+        if origem == "nutricao":
+            return render_template("bemvindo.html", erro_nutri=erro_msg)
+        else:
+            return render_template("bemvindo.html", erro_psico=erro_msg)
+
+
+
+
+
+
 
 @app.route("/agenda")
 @login_requerido
@@ -287,33 +597,57 @@ def salvar_agenda():
 
 
 
+
+
+
 @app.route("/nutricao_painel", methods=["GET", "POST"])
 @login_requerido
 def nutricao_painel():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM agendamentos_pendentes WHERE datetime(data || ' ' || hora) < datetime('now', '-1 day')")
+    # Limpa pendentes muito antigos
+    cursor.execute(
+        "DELETE FROM agendamentos_pendentes "
+        "WHERE datetime(data || ' ' || hora) < datetime('now', '-1 day')"
+    )
+
+    # Busca pendentes e confirmados
     cursor.execute("SELECT * FROM agendamentos_pendentes ORDER BY data, hora")
     pendentes = cursor.fetchall()
-
     cursor.execute("SELECT * FROM agendamentos_confirmados ORDER BY data, hora")
     confirmados = cursor.fetchall()
 
-    # Processa nova chave se for POST
+    # Se veio de um POST, insere a chave e redireciona (PRG)
     if request.method == "POST":
-        chave = request.form.get("chave")
-        gerado_por = request.form.get("gerado_por")
-        if chave and gerado_por:
-            cursor.execute("INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, ?)", (chave, gerado_por))
+        chave = request.form.get("chave", "").strip()
+        gerado_por = "Nutricionista"
+        if chave:
+            cursor.execute(
+                "INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, ?)",
+                (chave, gerado_por)
+            )
             conn.commit()
+        conn.close()
+        return redirect(url_for("nutricao_painel"))
 
-    # Carrega chaves de acesso
-    cursor.execute("SELECT * FROM acessos_pacientes ORDER BY id DESC")
+    # GET: carrega só as chaves do Nutricionista
+    cursor.execute("""
+        SELECT * FROM acessos_pacientes
+        WHERE gerado_por = 'Nutricionista'
+        ORDER BY id DESC
+    """)
     acessos = cursor.fetchall()
-
     conn.close()
-    return render_template("nutricao.html", pendentes=pendentes, confirmados=confirmados, acessos=acessos)
+
+    return render_template(
+        "nutricao.html",
+        pendentes=pendentes,
+        confirmados=confirmados,
+        acessos=acessos
+    )
+
+
 
 
 
@@ -358,7 +692,7 @@ def nutricao_painel():
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3, json, holidays
 from datetime import datetime, timedelta, date
-
+# Rota de agendamento da NUTRICIONISTA
 @app.route("/agendar", methods=["GET", "POST"])
 def agendar():
     # 1) Calcula mínimo de 48h e máximo de 20 dias à frente
@@ -895,40 +1229,53 @@ def acesso_paciente():
 
 @app.route("/verificar_chave", methods=["POST"])
 def verificar_chave():
-    chave = request.form.get("chave")
-
+    chave = request.form.get("chave", "").strip()
     if not chave:
         return "Chave não fornecida", 400
 
+    # 1) procura no banco da Nutri
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT gerado_por FROM acessos_pacientes WHERE chave = ?", (chave,))
     resultados = cursor.fetchall()
     conn.close()
 
+    # 2) se não achou nada, procura no banco da Psico
+    if not resultados:
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("SELECT gerado_por FROM acessos_pacientes WHERE chave = ?", (chave,))
+        resultados = cursor.fetchall()
+        conn.close()
+
+    # 3) se ainda não achou, dá erro
     if not resultados:
         return "❌ Chave inválida ou não encontrada.", 404
 
-    tipos = set([r[0] for r in resultados])
-
+    # 4) decide para onde redirecionar
+    tipos = {r[0] for r in resultados}
     if tipos == {"Nutricionista"}:
-        return redirect(url_for("paciente_nutricionista"))
+        return redirect(url_for("pacientenutricionista"))
     elif tipos == {"Psicóloga"}:
-        return redirect(url_for("paciente_psicologia"))
-    elif "Nutricionista" in tipos and "Psicóloga" in tipos:
-        # Renderiza um HTML que abre duas abas
+        return redirect(url_for("pacientepsicologia"))
+    else:
+        # se, por acaso, a mesma chave foi gerada em ambos os bancos
         return render_template("abrir_duas_abas.html")
 
 
 
 
 
+
+
+
+
 @app.route("/pacientenutricionista")
-def paciente_nutricionista():
+def pacientenutricionista():
     return render_template("pacientenutricionista.html")
 
 @app.route("/pacientepsicologia")
-def paciente_psicologia():
+def pacientepsicologia():
     return render_template("pacientepsicologia.html")
 
 
@@ -1001,6 +1348,44 @@ def confirmar_agendamento():
 
 
 
+#Início psicologia 
+
+
+
+@app.route("/salvar_agenda_psicologia", methods=["POST"])
+@login_requerido
+def salvar_agenda_psicologia():
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+
+    dias = request.form.getlist("dias")
+    duracao = int(request.form.get("duracao"))
+    excluir_feriados = bool(request.form.get("excluir_feriados"))
+
+    cursor.execute("DELETE FROM agenda_psicologa")
+
+    prefixos = {
+        "segunda": "seg",
+        "terca": "ter",
+        "quarta": "qua",
+        "quinta": "qui",
+        "sexta": "sex"
+    }
+
+    for dia in dias:
+        prefixo = prefixos.get(dia)
+        manha = request.form.get(f"manha_{prefixo}", "")
+        tarde = request.form.get(f"tarde_{prefixo}", "")
+        noite = request.form.get(f"noite_{prefixo}", "")
+
+        cursor.execute("""
+            INSERT INTO agenda_psicologa (dia, manha, tarde, noite, excluir_feriados, excluir_sabado, excluir_domingo, duracao_consulta)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (dia, manha, tarde, noite, excluir_feriados, False, False, duracao))
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for("psicologia_painel"))
 
 
 
@@ -1017,10 +1402,513 @@ def confirmar_agendamento():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route("/agenda_psicologia")
+@login_requerido
+def agenda_psicologia():
+    print("Rota /agenda_psicologia acessada corretamente!")
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM agenda_psicologa")
+    registros = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM planos_psicologicos ORDER BY id DESC")
+    planos = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM ferias_psicologa ORDER BY data_inicio")
+    ferias = cursor.fetchall()
+
+    conn.close()
+
+    dados = {}
+    excluir_feriados = False
+    duracao = 50  # duração padrão
+
+    for linha in registros:
+        dia = linha[1]
+        dados[dia] = {
+            "manha": linha[2],
+            "tarde": linha[3],
+            "noite": linha[4]
+        }
+        excluir_feriados = linha[5]
+        duracao = linha[8]
+
+    return render_template("psicologia_agenda.html", dados=dados,
+                           excluir_feriados=excluir_feriados,
+                           duracao=duracao,
+                           planos=planos,
+                           ferias=ferias)
+
+
+
+
+
+
+
+@app.route("/adicionar_plano_psicologa", methods=["POST"])
+def adicionar_plano_psicologa():
+    nome = request.form.get("nome_plano")
+    descricao = request.form.get("descricao_plano")
+    valor = request.form.get("valor_plano")
+
+    if not nome or not valor:
+        return "Nome e valor são obrigatórios!", 400
+
+    try:
+        valor_float = float(str(valor).replace(",", "."))
+    except ValueError:
+        return "Valor inválido!", 400
+
+    with sqlite3.connect(DB_PATH_PSICO) as conn:  # <-- Corrigido aqui
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO planos_psicologicos (nome, descricao, valor)
+            VALUES (?, ?, ?)
+        """, (nome, descricao, valor_float))
+        conn.commit()
+
+    return redirect("/agenda_psicologia")
+
+
+@app.route("/excluir_plano_psicologico", methods=["POST"])
+@login_requerido
+def excluir_plano_psicologico():
+    id_ = request.form.get("id")
+    if id_:
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM planos_psicologicos WHERE id=?", (id_,))
+        conn.commit()
+        conn.close()
+    return redirect(url_for("agenda_psicologia"))
+
+
+
+
+
+# Rota de agendamento da PSICÓLOGA
+@app.route("/agendar_psicologia", methods=["GET", "POST"])
+def agendar_psicologia():
+    # 1) Define limites para agendamento (mínimo 48h, máximo 20 dias à frente)
+    agora     = datetime.now()
+    daqui_48h = agora + timedelta(hours=48)
+    daqui_20d = agora + timedelta(days=20)
+    data_minima = daqui_48h.date().isoformat()
+    data_maxima = daqui_20d.date().isoformat()
+
+    # 2) Carrega períodos de férias da psicóloga
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+    cursor.execute("SELECT data_inicio, data_fim FROM ferias_psicologa")
+    periodos_ferias = cursor.fetchall()
+    conn.close()
+
+    # 3) Carrega agenda semanal e duração das consultas
+    def carregar_agenda():
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agenda_psicologa")
+        linhas = cursor.fetchall()
+        conn.close()
+        agenda = {}
+        duracao = 50
+        for linha in linhas:
+            dia = linha[1]
+            agenda[dia] = {
+                "manha": linha[2],
+                "tarde": linha[3],
+                "noite": linha[4]
+            }
+            duracao = linha[8]
+        return agenda, duracao
+
+    agenda, duracao = carregar_agenda()
+
+    # 4) Carrega lista de planos psicológicos
+    def carregar_planos():
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nome, descricao, valor FROM planos_psicologicos")
+        planos = cursor.fetchall()
+        conn.close()
+        return planos
+
+    planos = carregar_planos()
+
+    # 5) Lista de feriados nacionais
+    feriados = holidays.Brazil(years=agora.year)
+    feriados_str = [str(d) for d in feriados]
+
+    # 6) Coleta horários já ocupados nos agendamentos pendentes e confirmados
+    def horarios_ocupados():
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        ocu = {}
+        cursor.execute("SELECT data, hora FROM agendamentos_confirmados WHERE tipo_atendimento='Psicóloga'")
+        for d, h in cursor.fetchall():
+            ocu.setdefault(d, []).append(h)
+        cursor.execute("SELECT data, hora FROM agendamentos_pendentes WHERE tipo_atendimento='Psicóloga'")
+        for d, h in cursor.fetchall():
+            ocu.setdefault(d, []).append(h)
+        conn.close()
+        return ocu
+
+    ocupados = horarios_ocupados()
+
+    # 7) Calcula dias bloqueados (fim de semana, feriados, férias ou sem horários livres)
+    def dias_sem_agenda(agenda, feriados, ocupados, duracao, periodos_ferias):
+        bloqueados = []
+        hoje_mais_2 = date.today() + timedelta(days=2)
+
+        # marca todos os dias de férias
+        dias_ferias = set()
+        for inicio, fim in periodos_ferias:
+            try:
+                d0 = datetime.strptime(inicio, "%Y-%m-%d").date()
+                d1 = datetime.strptime(fim, "%Y-%m-%d").date()
+                for i in range((d1 - d0).days + 1):
+                    dias_ferias.add((d0 + timedelta(days=i)).isoformat())
+            except:
+                pass
+
+        # checa 60 dias para montar bloqueios
+        for i in range(60):
+            dia = hoje_mais_2 + timedelta(days=i)
+            dstr = dia.isoformat()
+            wd = dia.weekday()
+            chave = ["segunda","terca","quarta","quinta","sexta"][wd] if wd < 5 else None
+
+            if wd > 4 or dstr in feriados or dstr in dias_ferias or chave not in agenda:
+                bloqueados.append(dstr)
+                continue
+
+            # gera slots a cada 'duracao' minutos
+            slots = []
+            blocos = agenda[chave]
+            for turno in ("manha","tarde","noite"):
+                if blocos[turno]:
+                    try:
+                        ini_h, fim_h = blocos[turno].split("-")
+                        hi, mi = map(int, ini_h.strip().split(":"))
+                        hf, mf = map(int, fim_h.strip().split(":"))
+                        t0 = datetime.combine(dia, datetime.min.time()).replace(hour=hi, minute=mi)
+                        tF = datetime.combine(dia, datetime.min.time()).replace(hour=hf, minute=mf)
+                        while t0 + timedelta(minutes=duracao) <= tF:
+                            slots.append(t0.strftime("%H:%M"))
+                            t0 += timedelta(minutes=duracao)
+                    except:
+                        pass
+
+            livres = set(slots) - set(ocupados.get(dstr, []))
+            if not livres:
+                bloqueados.append(dstr)
+
+        return bloqueados
+
+    dias_bloqueados = dias_sem_agenda(agenda, feriados_str, ocupados, duracao, periodos_ferias)
+
+    # 8) Calcula datas disponíveis entre 48h e 20 dias à frente
+    inicio_data = date.today() + timedelta(days=2)
+    fim_data    = daqui_20d.date()
+    total_dias  = (fim_data - inicio_data).days
+    dias_disponiveis = [
+        (inicio_data + timedelta(days=i)).isoformat()
+        for i in range(total_dias + 1)
+        if (inicio_data + timedelta(days=i)).isoformat() not in dias_bloqueados
+    ]
+
+    # Contexto para o template
+    context = {
+        "data_minima": data_minima,
+        "data_maxima": data_maxima,
+        "agenda_json": json.dumps(agenda),
+        "feriados_json": json.dumps(feriados_str),
+        "horarios_ocupados_json": json.dumps(ocupados),
+        "dias_bloqueados_json": json.dumps(dias_bloqueados),
+        "dias_disponiveis": dias_disponiveis,
+        "duracao": duracao,
+        "planos": planos
+    }
+
+    # 9) Se for POST, processa o envio de formulário
+    if request.method == "POST":
+        nome             = request.form.get("nome")
+        cpf              = request.form.get("cpf")
+        tel              = request.form.get("telefone")
+        data_escolhida   = request.form.get("data")
+        hora_escolhida   = request.form.get("hora")
+        plano_id         = request.form.get("plano_id")
+        tipo_atendimento = request.form.get("tipo_atendimento")
+
+        # validações básicas
+        if not re.fullmatch(r"55\d{10,11}", tel):
+            return render_template("psicologia_agendamento.html", erro="❌ Telefone inválido.", **context)
+        if not all([nome, cpf, tel, data_escolhida, hora_escolhida]):
+            return render_template("psicologia_agendamento.html", erro="Preencha todos os campos.", **context)
+        escolha_dt = datetime.strptime(data_escolhida, "%Y-%m-%d")
+        if escolha_dt < daqui_48h:
+            return render_template("psicologia_agendamento.html", erro="❌ Menos de 48h de antecedência.", **context)
+        if escolha_dt.date() > daqui_20d.date():
+            return render_template("psicologia_agendamento.html", erro="❌ Além de 20 dias.", **context)
+        if data_escolhida not in dias_disponiveis:
+            return render_template("psicologia_agendamento.html", erro="❌ Data indisponível.", **context)
+
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+
+        # verifica duplicidade
+        cursor.execute(
+            "SELECT 1 FROM agendamentos_pendentes WHERE data=? AND hora=? AND tipo_atendimento='Psicóloga'",
+            (data_escolhida, hora_escolhida)
+        )
+        if cursor.fetchone():
+            conn.close()
+            return render_template("psicologia_agendamento.html", erro="❌ Horário reservado.", **context)
+
+        # busca o nome do plano apenas uma vez
+        cursor.execute("SELECT nome FROM planos_psicologicos WHERE id = ?", (plano_id,))
+        row = cursor.fetchone()
+        plano_nome = row[0] if row else "Plano não encontrado"
+
+        # insere no banco com o tipo escolhido
+        cursor.execute("""
+            INSERT INTO agendamentos_pendentes
+              (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (nome, cpf, tel, data_escolhida, hora_escolhida, plano_nome, tipo_atendimento))
+        conn.commit()
+        conn.close()
+
+        return render_template("agendamento_enviado.html", **context)
+
+    # 10) Se GET, apenas renderiza o formulário
+    return render_template("psicologia_agendamento.html", **context)
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route("/confirmar_agendamento_psico", methods=["POST"])
+@login_requerido
+def confirmar_agendamento_psico():
+    id_ = request.form.get("id")
+    if not id_:
+        return redirect(url_for("psicologia_painel"))
+
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM agendamentos_pendentes WHERE id=?", (id_,))
+    agendamento = cursor.fetchone()
+
+    if agendamento:
+        cursor.execute("""
+            INSERT INTO agendamentos_confirmados (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, agendamento[1:])
+        cursor.execute("DELETE FROM agendamentos_pendentes WHERE id=?", (id_,))
+        conn.commit()
+
+    conn.close()
+    return redirect(url_for("psicologia_painel"))
+
+
+@app.route("/recusar_agendamento_psico", methods=["POST"])
+@login_requerido
+def recusar_agendamento_psico():
+    id_ = request.form.get("id")
+    if id_:
+        conn = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM agendamentos_pendentes WHERE id=?", (id_,))
+        conn.commit()
+        conn.close()
+    return redirect(url_for("psicologia_painel"))
+
+
+
+@app.route("/excluir_confirmado_psico", methods=["POST"])
+@login_requerido
+def excluir_confirmado_psico():
+    id_ = request.form["id"]
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM agendamentos_confirmados WHERE id = ?", (id_,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("psicologia_painel"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route("/salvar_paciente_confirmado_psico", methods=["POST"])
+@login_requerido
+def salvar_paciente_confirmado_psico():
+    nome      = request.form["nome"]
+    cpf       = request.form["cpf"]
+    telefone  = request.form["telefone"]
+    data      = request.form["data"]
+    hora      = request.form["hora"]
+    plano     = request.form["plano"]
+    tipo      = request.form["tipo"]
+
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO agendamentos_confirmados
+          (nome, cpf, telefone, data, hora, plano_nome, tipo_atendimento)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (nome, cpf, telefone, data, hora, plano, tipo))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("psicologia_painel"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    criar_bancos()
+    atualizar_banco_agendamentos()  # Se quiser manter isso como suporte
+    app.run(host="0.0.0.0", port=5000)
