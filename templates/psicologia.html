@@ -10,13 +10,11 @@
       padding: 30px;
       margin: 0;
     }
-
     h1 {
       color: #6a1b9a;
       text-align: center;
       margin-bottom: 30px;
     }
-
     .botoes {
       display: flex;
       flex-wrap: wrap;
@@ -24,12 +22,6 @@
       gap: 15px;
       margin-bottom: 40px;
     }
-
-    .botoes form,
-    .botoes button {
-      display: inline-block;
-    }
-
     .botoes button {
       padding: 12px 24px;
       font-size: 16px;
@@ -41,39 +33,33 @@
       transition: background-color 0.2s ease;
       min-width: 150px;
     }
-
     .botoes button:hover {
       background-color: #6a1b9a;
     }
-
     table {
       width: 100%;
       max-width: 1000px;
       margin: 0 auto 40px auto;
       border-collapse: collapse;
     }
-
     th, td {
       border: 1px solid #bbb;
       padding: 10px;
       text-align: center;
     }
-
     thead {
       background-color: #e1bee7; /* cabeçalho roxo claro */
     }
-
     hr {
       border: none;
       border-top: 2px solid #ba68c8;
       margin: 50px 0 20px 0;
     }
-
     h2 {
       text-align: center;
       color: #6a1b9a;
+      margin-bottom: 15px;
     }
-
     .confirmar-btn {
       background-color: #7e57c2;
       color: white;
@@ -85,7 +71,6 @@
     .confirmar-btn:hover {
       background-color: #5e35b1;
     }
-
     .recusar-btn {
       background-color: #f44336;
       color: white;
@@ -98,11 +83,40 @@
     .recusar-btn:hover {
       background-color: #c62828;
     }
-
     .mensagem {
       text-align: center;
       font-style: italic;
       color: #888;
+    }
+    #formPaciente, #formSessao {
+      display: none;
+      margin: 20px auto;
+      max-width: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #formPaciente input,
+    #formPaciente select,
+    #formSessao input,
+    #formSessao select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    #formPaciente button,
+    #formSessao button {
+      background-color: #7b1fa2;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #formPaciente button:hover,
+    #formSessao button:hover {
+      background-color: #5e35b1;
     }
   </style>
 </head>
@@ -111,52 +125,40 @@
   <h1>Área da Psicologia</h1>
 
   <div class="botoes">
-    <form action="/agenda_psicologia" method="GET">
+    <form action="{{ url_for('agenda_psicologia') }}" method="GET">
       <button type="submit">Agenda</button>
     </form>
-
-    <form action="/logout" method="GET">
-      <button type="submit" style="background-color: #d32f2f;">Sair</button>
+    <form action="{{ url_for('logout') }}" method="GET">
+      <button type="submit" style="background-color:#d32f2f;">Sair</button>
     </form>
   </div>
 
+  <!-- 1) Solicitações pendentes -->
   <hr>
   <h2>Solicitações de Agendamento</h2>
   {% if pendentes %}
     <table>
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>CPF</th>
-          <th>Telefone</th>
-          <th>Data</th>
-          <th>Hora</th>
-          <th>Plano</th>
-          <th>Tipo</th>
-          <th>Ação</th>
+          <th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th><th>Plano</th><th>Tipo</th><th>Ação</th>
         </tr>
       </thead>
       <tbody>
         {% for row in pendentes %}
-          <tr>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }}</td>
-            <td>{{ row[3] }}</td>
-            <td>{{ row[4] }}</td>
-            <td>{{ row[5] }}</td>
-            <td>{{ row[6] }}</td>
-            <td>{{ row[7] }}</td>
-            <td>
-              <form method="POST" action="{{ url_for('confirmar_agendamento_psico') }}">
-                <input type="hidden" name="id" value="{{ row[0] }}">
-                <button type="submit" class="confirmar-btn">Confirmar</button>
-              </form>
-              <form method="POST" action="{{ url_for('recusar_agendamento_psico') }}">
-                <input type="hidden" name="id" value="{{ row[0] }}">
-                <button type="submit" class="recusar-btn">Recusar</button>
-              </form>
-            </td>
-          </tr>
+        <tr>
+          <td>{{ row[1] }}</td><td>{{ row[2] }}</td><td>{{ row[3] }}</td><td>{{ row[4] }}</td><td>{{ row[5] }}</td>
+          <td>{{ row[6] }}</td><td>{{ row[7] }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('confirmar_agendamento_psico') }}" style="display:inline;">
+              <input type="hidden" name="id" value="{{ row[0] }}">
+              <button type="submit" class="confirmar-btn">Confirmar</button>
+            </form>
+            <form method="POST" action="{{ url_for('recusar_agendamento_psico') }}" style="display:inline;">
+              <input type="hidden" name="id" value="{{ row[0] }}">
+              <button type="submit" class="recusar-btn">Recusar</button>
+            </form>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -164,81 +166,55 @@
     <p class="mensagem">Nenhuma solicitação pendente.</p>
   {% endif %}
 
+  <!-- 2) Confirmação manual -->
   <hr>
   <div style="text-align:center; margin-top:20px;">
-    <button id="btnAdicionarPaciente" onclick="mostrarFormulario()" style="background-color: #8e24aa; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+    <button onclick="mostrarForm('formPaciente')" style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
       Adicionar Paciente
     </button>
   </div>
-
-  <div id="formPaciente" style="display:none; margin: 20px auto; max-width: 600px;">
-    <form method="POST"
-          action="{{ url_for('salvar_paciente_confirmado_psico') }}"
-          style="background:white; padding: 20px; border-radius: 10px;">
-      
+  <div id="formPaciente">
+    <form method="POST" action="{{ url_for('salvar_paciente_confirmado_psico') }}">
       <label>Nome:</label>
-      <input type="text" name="nome" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="text" name="nome" required>
       <label>CPF:</label>
-      <input type="text" name="cpf" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="text" name="cpf" required>
       <label>Telefone:</label>
-      <input type="text" name="telefone" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="text" name="telefone" required>
       <label>Data:</label>
-      <input type="date" name="data" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="date" name="data" required>
       <label>Hora:</label>
-      <input type="time" name="hora" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="time" name="hora" required>
       <label>Plano:</label>
-      <!-- name ajustado para “plano” -->
-      <input type="text" name="plano" required style="width:100%; padding:8px; margin-bottom:10px;"><br>
-
+      <input type="text" name="plano" required>
       <label>Tipo:</label>
-      <!-- name ajustado para “tipo” -->
-      <select name="tipo" required style="width:100%; padding:8px; margin-bottom:10px;">
-        <option value="Presencial">Presencial</option>
-        <option value="Online">Online</option>
-      </select><br>
-
-      <button type="submit"
-              style="background-color:#7b1fa2; color:white; padding:10px 20px; border:none; border-radius:5px;">
-        Salvar
-      </button>
+      <select name="tipo" required>
+        <option>Presencial</option>
+        <option>Online</option>
+      </select>
+      <button type="submit">Salvar</button>
     </form>
   </div>
 
+  <!-- 3) Agenda Confirmada -->
+  <hr>
   <h2>Agenda Confirmada</h2>
   {% if confirmados %}
     <table>
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>CPF</th>
-          <th>Telefone</th>
-          <th>Data</th>
-          <th>Hora</th>
-          <th>Plano</th>
-          <th>Tipo</th>
-          <th>Ação</th>
+          <th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th><th>Plano</th><th>Tipo</th><th>Ação</th>
         </tr>
       </thead>
       <tbody>
         {% for c in confirmados %}
         <tr>
-          <td>{{ c[1] }}</td>
-          <td>{{ c[2] }}</td>
-          <td>{{ c[3] }}</td>
-          <td>{{ c[4] }}</td>
-          <td>{{ c[5] }}</td>
-          <td>{{ c[6] }}</td>
-          <td>{{ c[7] }}</td>
+          <td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] }}</td><td>{{ c[5] }}</td>
+          <td>{{ c[6] }}</td><td>{{ c[7] }}</td>
           <td>
-            <form method="POST" action="{{ url_for('excluir_confirmado_psico') }}" style="display:inline;">
+            <form method="POST" action="{{ url_for('excluir_confirmado_psico') }}">
               <input type="hidden" name="id" value="{{ c[0] }}">
-              <button type="submit" class="recusar-btn"
-                      onclick="return confirm('Deseja realmente excluir este agendamento confirmado?')">
+              <button type="submit" class="recusar-btn" onclick="return confirm('Excluir agendamento?')">
                 Excluir
               </button>
             </form>
@@ -251,36 +227,28 @@
     <p class="mensagem">Agenda vazia.</p>
   {% endif %}
 
+  <!-- 4) Chaves de Acesso -->
   <hr>
   <h2 style="text-align:center;">Gerar Chave de Acesso</h2>
-  <form method="POST" action="/psicologia_painel"
-        style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-    <input type="text" name="chave" placeholder="CPF ou código do paciente" required
-          style="padding: 5px;"/>
-    <button type="submit" style="padding: 6px 12px;">Adicionar Chave</button>
+  <form method="POST" action="{{ url_for('psicologia_painel') }}"
+        style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
+    <input type="text" name="chave" placeholder="CPF ou código do paciente" required style="padding:5px;">
+    <button type="submit" style="padding:6px 12px;">Adicionar Chave</button>
   </form>
-
   <h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
   {% if acessos %}
     <table>
       <thead>
-        <tr>
-          <th>ID</th>
-          <th>Chave</th>
-          <th>Gerado por</th>
-          <th>Ação</th>
-        </tr>
+        <tr><th>ID</th><th>Chave</th><th>Gerado por</th><th>Ação</th></tr>
       </thead>
       <tbody>
-        {% for acesso in acessos %}
+        {% for a in acessos %}
         <tr>
-          <td>{{ acesso[0] }}</td>
-          <td>{{ acesso[1] }}</td>
-          <td>{{ acesso[2] }}</td>
+          <td>{{ a[0] }}</td><td>{{ a[1] }}</td><td>{{ a[2] }}</td>
           <td>
             <form method="POST" action="{{ url_for('excluir_chave_psico') }}">
-              <input type="hidden" name="id" value="{{ acesso[0] }}">
-              <button type="submit" style="background:red; color:white;">Excluir</button>
+              <input type="hidden" name="id" value="{{ a[0] }}">
+              <button type="submit" class="recusar-btn">Excluir</button>
             </form>
           </td>
         </tr>
@@ -288,13 +256,61 @@
       </tbody>
     </table>
   {% else %}
-    <p style="text-align:center;">Nenhuma chave cadastrada.</p>
+    <p class="mensagem">Nenhuma chave cadastrada.</p>
+  {% endif %}
+
+  <!-- 5) Sessões de Terapia Fixas -->
+  <hr>
+  <h2>Pacientes de Sessão</h2>
+  <div style="text-align:center; margin-bottom:15px;">
+    <button onclick="mostrarForm('formSessao')" style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
+      Adicionar Paciente de Sessão
+    </button>
+  </div>
+  <div id="formSessao">
+    <form method="POST" action="{{ url_for('salvar_paciente_sessao') }}">
+      <label>Nome do paciente:</label>
+      <input type="text" name="nome" required>
+      <label>Telefone:</label>
+      <input type="text" name="telefone" required>
+      <label>Dia da semana:</label>
+      <select name="dia_semana" required>
+        <option>Segunda</option><option>Terça</option><option>Quarta</option>
+        <option>Quinta</option><option>Sexta</option>
+      </select>
+      <label>Horário:</label>
+      <input type="time" name="horario" required>
+      <button type="submit">Salvar Sessão</button>
+    </form>
+  </div>
+  {% if pacientes_sessao %}
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Telefone</th><th>Dia</th><th>Horário</th><th>Ação</th></tr>
+      </thead>
+      <tbody>
+        {% for p in pacientes_sessao %}
+        <tr>
+          <td>{{ p.nome }}</td><td>{{ p.telefone }}</td><td>{{ p.dia_semana }}</td><td>{{ p.horario }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('excluir_paciente_sessao') }}">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <button type="submit" class="recusar-btn" onclick="return confirm('Remover este paciente da sessão?')">
+                Excluir
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="mensagem">Nenhum paciente de sessão cadastrado.</p>
   {% endif %}
 
   <script>
-    function mostrarFormulario() {
-      document.getElementById("formPaciente").style.display = "block";
-      document.getElementById("btnAdicionarPaciente").style.display = "none";
+    function mostrarForm(id) {
+      document.getElementById(id).style.display = 'block';
     }
   </script>
 

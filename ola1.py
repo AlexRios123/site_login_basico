@@ -274,6 +274,18 @@ def criar_bancos():
         """)
         
         
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pacientes_sessao (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT    NOT NULL,
+                telefone TEXT NOT NULL,
+                dia_semana TEXT NOT NULL,
+                horario TEXT   NOT NULL
+            )
+        """)
+        
+        
+        
         conn.commit()
 
             
@@ -1920,6 +1932,33 @@ def excluir_ferias_psicologa():
 
 
 
+@app.route('/salvar_paciente_sessao', methods=['POST'])
+@login_requerido
+def salvar_paciente_sessao():
+    nome = request.form['nome']
+    tel  = request.form['telefone']
+    dia  = request.form['dia_semana']
+    hor  = request.form['horario']
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    c = conn.cursor()
+    c.execute('''
+      INSERT INTO pacientes_sessao (nome, telefone, dia_semana, horario)
+      VALUES (?, ?, ?, ?)
+    ''', (nome, tel, dia, hor))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('psicologia_painel'))
+
+@app.route('/excluir_paciente_sessao', methods=['POST'])
+@login_requerido
+def excluir_paciente_sessao():
+    id_ = request.form['id']
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    c = conn.cursor()
+    c.execute('DELETE FROM pacientes_sessao WHERE id=?', (id_,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('psicologia_painel'))
 
 
 
