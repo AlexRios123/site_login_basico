@@ -65,140 +65,170 @@
 </head>
 <body>
 
-<h1>Agenda da Psicologia</h1>
+  <h1>Agenda da Psicologia</h1>
 
-<form method="POST" action="/salvar_agenda_psicologia">
-  {% set dias = [('segunda', 'seg'), ('terca', 'ter'), ('quarta', 'qua'), ('quinta', 'qui'), ('sexta', 'sex')] %}
-  {% for nome, prefixo in dias %}
-  <div class="dia">
-    <label>
-      <input type="checkbox" name="dias" value="{{ nome }}"
-      {% if nome in dados %}checked{% endif %}> {{ nome|capitalize }}-feira
-    </label>
-    <div class="horarios">
-      <input type="text" name="manha_{{ prefixo }}" placeholder="Manhã ex: 08:00-11:30" value="{{ dados[nome]['manha'] if nome in dados else '' }}">
-      <input type="text" name="tarde_{{ prefixo }}" placeholder="Tarde ex: 13:00-17:00" value="{{ dados[nome]['tarde'] if nome in dados else '' }}">
-      <input type="text" name="noite_{{ prefixo }}" placeholder="Noite ex: 18:00-20:00" value="{{ dados[nome]['noite'] if nome in dados else '' }}">
+  <!-- Formulário principal de agenda -->
+  <form method="POST" action="{{ url_for('salvar_agenda_psicologia') }}">
+    {% set dias = [('segunda', 'seg'), ('terca', 'ter'), ('quarta', 'qua'), ('quinta', 'qui'), ('sexta', 'sex')] %}
+    {% for nome, prefixo in dias %}
+    <div class="dia">
+      <label>
+        <input type="checkbox" name="dias" value="{{ nome }}"
+               {% if nome in dados %}checked{% endif %}>
+        {{ nome|capitalize }}-feira
+      </label>
+      <div class="horarios">
+        <input type="text" name="manha_{{ prefixo }}"
+               placeholder="Manhã ex: 08:00-11:30"
+               value="{{ dados[nome]['manha'] if nome in dados else '' }}">
+        <input type="text" name="tarde_{{ prefixo }}"
+               placeholder="Tarde ex: 13:00-17:00"
+               value="{{ dados[nome]['tarde'] if nome in dados else '' }}">
+        <input type="text" name="noite_{{ prefixo }}"
+               placeholder="Noite ex: 18:00-20:00"
+               value="{{ dados[nome]['noite'] if nome in dados else '' }}">
+      </div>
     </div>
-  </div>
-  {% endfor %}
+    {% endfor %}
 
-  <div class="opcoes">
-    <label><input type="checkbox" name="excluir_feriados" {% if excluir_feriados %}checked{% endif %}> Excluir feriados nacionais</label>
-  </div>
+    <div class="opcoes">
+      <label>
+        <input type="checkbox" name="excluir_feriados"
+               {% if excluir_feriados %}checked{% endif %}>
+        Excluir feriados nacionais
+      </label>
+    </div>
 
-  <div class="opcoes">
-    <label>Duração da consulta:</label>
-    <select name="duracao">
-      {% for i in range(20, 121, 10) %}
-        <option value="{{ i }}" {% if duracao == i %}selected{% endif %}>{{ i }} minutos</option>
-      {% endfor %}
-    </select>
-  </div>
+    <div class="opcoes">
+      <label>Duração da consulta:</label>
+      <select name="duracao">
+        {% for i in range(20, 121, 10) %}
+          <option value="{{ i }}" {% if duracao == i %}selected{% endif %}>
+            {{ i }} minutos
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-  <button type="submit">Salvar</button>
-
-  <button type="button" onclick="mostrarFerias()" style="background-color: orange; color: white; margin-left: 10px;">Férias</button>
-</form>
-
-<!-- Férias -->
-<div id="feriasBox" style="display:none; margin-top: 20px;">
-  <form method="POST" action="/salvar_ferias_psicologa" style="background:white; padding: 20px; border-radius: 10px;">
-    <h3 style="color:#7b1fa2;">Definir período de férias</h3>
-    <label>Data início:</label>
-    <input type="date" name="ferias_inicio" required style="width:100%; padding:8px; margin: 5px 0;"><br>
-
-    <label>Data fim:</label>
-    <input type="date" name="ferias_fim" required style="width:100%; padding:8px; margin: 5px 0;"><br>
-
-    <button type="submit" style="background-color: purple; color: white; padding: 10px 20px; margin-top: 10px;">Salvar</button>
+    <button type="submit">Salvar</button>
+    <button type="button" onclick="mostrarFerias()"
+            style="background-color: orange; color: white; margin-left: 10px;">
+      Férias
+    </button>
   </form>
-</div>
 
-{% if ferias %}
-<hr>
-<h3 style="color: #7b1fa2;">Férias agendadas</h3>
-<table style="width: 100%; border-collapse: collapse;">
-  <thead>
-    <tr style="background-color: #e1bee7;">
-      <th style="padding: 8px; border: 1px solid #ccc;">Início</th>
-      <th style="padding: 8px; border: 1px solid #ccc;">Fim</th>
-      <th style="padding: 8px; border: 1px solid #ccc;">Ação</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for f in ferias %}
-    <tr>
-      <td style="padding: 8px; border: 1px solid #ccc;">{{ f[1] }}</td>
-      <td style="padding: 8px; border: 1px solid #ccc;">{{ f[2] }}</td>
-      <td style="padding: 8px; border: 1px solid #ccc;">
-        <form method="POST" action="/excluir_ferias_psicologa">
-          <input type="hidden" name="id" value="{{ f[0] }}">
-          <button type="submit" style="background-color: red; color:white; padding: 6px 12px; border: none; border-radius: 5px;"
-                  onclick="return confirm('Deseja excluir este período de férias?')">Excluir</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endif %}
 
-<hr style="margin: 40px 0; border: none; border-top: 2px solid #ccc">
-<h2 style="color: #7b1fa2;">Cadastrar Plano Psicológico</h2>
+  <!-- Formulário de FÉRIAS (inicialmente oculto) -->
+  <div id="feriasBox" style="display:none; margin-top: 20px;">
+    <form method="POST"
+          action="{{ url_for('salvar_ferias_psicologa') }}"
+          style="background:white; padding: 20px; border-radius: 10px;">
+      <h3 style="color:#7b1fa2;">Definir período de férias</h3>
+      <label>Data início:</label>
+      <input type="date" name="ferias_inicio" required
+             style="width:100%; padding:8px; margin: 5px 0;"><br>
 
-<form method="POST" action="/adicionar_plano_psicologa">
-  <div class="opcoes">
-    <label>Nome do plano:</label>
-    <input type="text" name="nome_plano" style="width:100%; padding:8px;">
+      <label>Data fim:</label>
+      <input type="date" name="ferias_fim" required
+             style="width:100%; padding:8px; margin: 5px 0;"><br>
+
+      <button type="submit"
+              style="background-color: purple; color: white; padding: 10px 20px; margin-top: 10px;">
+        Salvar
+      </button>
+    </form>
   </div>
 
-  <div class="opcoes">
-    <label>Detalhamento:</label>
-    <textarea name="descricao_plano" rows="4" style="width:100%; padding:8px;"></textarea>
-  </div>
+  <!-- Lista de férias cadastradas -->
+  {% if ferias %}
+  <hr>
+  <h3 style="color: #7b1fa2;">Férias agendadas</h3>
+  <table style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #e1bee7;">
+        <th style="padding: 8px; border: 1px solid #ccc;">Início</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Fim</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in ferias %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ccc;">{{ f[1] }}</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">{{ f[2] }}</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">
+          <form method="POST"
+                action="{{ url_for('excluir_ferias_psicologa') }}">
+            <input type="hidden" name="id" value="{{ f[0] }}">
+            <button type="submit"
+                    style="background-color: red; color:white; padding: 6px 12px; border: none; border-radius: 5px;"
+                    onclick="return confirm('Deseja excluir este período de férias?')">
+              Excluir
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 
-  <div class="opcoes">
-    <label>Valor (R$):</label>
-    <input type="text" name="valor_plano" style="width:100%; padding:8px;">
-  </div>
 
-  <button type="submit">Adicionar Plano</button>
-</form>
+  <hr style="margin: 40px 0; border: none; border-top: 2px solid #ccc">
+  <h2 style="color: #7b1fa2;">Cadastrar Plano Psicológico</h2>
+  <form method="POST" action="{{ url_for('adicionar_plano_psicologa') }}">
+    <div class="opcoes">
+      <label>Nome do plano:</label>
+      <input type="text" name="nome_plano" style="width:100%; padding:8px;">
+    </div>
+    <div class="opcoes">
+      <label>Detalhamento:</label>
+      <textarea name="descricao_plano" rows="4" style="width:100%; padding:8px;"></textarea>
+    </div>
+    <div class="opcoes">
+      <label>Valor (R$):</label>
+      <input type="text" name="valor_plano" style="width:100%; padding:8px;">
+    </div>
+    <button type="submit">Adicionar Plano</button>
+  </form>
 
-<hr>
-<h2 style="color: #7b1fa2;">Planos Cadastrados</h2>
-<table style="width:100%; border-collapse: collapse;">
-  <thead>
-    <tr style="background-color: #f3e5f5;">
-      <th style="padding: 8px; border: 1px solid #ccc;">Nome</th>
-      <th style="padding: 8px; border: 1px solid #ccc;">Descrição</th>
-      <th style="padding: 8px; border: 1px solid #ccc;">Valor</th>
-      <th style="padding: 8px; border: 1px solid #ccc;">Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for plano in planos %}
-    <tr>
-      <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[1] }}</td>
-      <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[2] }}</td>
-      <td style="padding: 8px; border: 1px solid #ccc;">R$ {{ plano[3] }}</td>
-      <td style="padding: 8px; border: 1px solid #ccc;">
-        <form action="{{ url_for('excluir_plano_psicologico') }}" method="POST">
-          <input type="hidden" name="id" value="{{ plano[0] }}">
-          <button type="submit" onclick="return confirm('Tem certeza que deseja excluir este plano?')">Excluir</button>
-      </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+  <hr>
+  <h2 style="color: #7b1fa2;">Planos Cadastrados</h2>
+  <table style="width:100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #f3e5f5;">
+        <th style="padding: 8px; border: 1px solid #ccc;">Nome</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Descrição</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Valor</th>
+        <th style="padding: 8px; border: 1px solid #ccc;">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for plano in planos %}
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[1] }}</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">{{ plano[2] }}</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">R$ {{ plano[3] }}</td>
+        <td style="padding: 8px; border: 1px solid #ccc;">
+          <form method="POST"
+                action="{{ url_for('excluir_plano_psicologico') }}">
+            <input type="hidden" name="id" value="{{ plano[0] }}">
+            <button type="submit"
+                    onclick="return confirm('Tem certeza que deseja excluir este plano?')">
+              Excluir
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-<script>
-  function mostrarFerias() {
-    document.getElementById("feriasBox").style.display = "block";
-  }
-</script>
+  <script>
+    function mostrarFerias() {
+      document.getElementById("feriasBox").style.display = "block";
+    }
+  </script>
 
 </body>
 </html>

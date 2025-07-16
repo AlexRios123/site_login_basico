@@ -1880,6 +1880,45 @@ def salvar_paciente_confirmado_psico():
 
 
 
+@app.route("/salvar_ferias_psicologa", methods=["POST"])
+@login_requerido
+def salvar_ferias_psicologa():
+    data_inicio = request.form.get("ferias_inicio")
+    data_fim    = request.form.get("ferias_fim")
+
+    if data_inicio and data_fim:
+        conn   = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO ferias_psicologa (data_inicio, data_fim) VALUES (?, ?)",
+            (data_inicio, data_fim)
+        )
+        conn.commit()
+        conn.close()
+
+    return redirect(url_for("agenda_psicologia"))
+
+
+@app.route("/excluir_ferias_psicologa", methods=["POST"])
+@login_requerido
+def excluir_ferias_psicologa():
+    id_ = request.form.get("id")
+    if id_:
+        conn   = sqlite3.connect(DB_PATH_PSICO)
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM ferias_psicologa WHERE id = ?",
+            (id_,)
+        )
+        conn.commit()
+        conn.close()
+
+    return redirect(url_for("agenda_psicologia"))
+
+
+
+
+
 
 
 
