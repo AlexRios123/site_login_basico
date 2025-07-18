@@ -96,6 +96,22 @@
     </select>
   </div>
 
+  <form method="POST" action="/salvar_atendimentos">
+    <label>
+      <input type="checkbox" name="atendimento_online" {% if atendimento_online %}checked{% endif %}>
+      Atendimento online
+    </label>
+    <label>
+      <input type="checkbox" name="atendimento_presencial" {% if atendimento_presencial %}checked{% endif %}>
+      Atendimento presencial
+    </label>
+    <button type="submit">Salvar</button>
+  </form>
+
+
+
+
+
   <button type="submit">Salvar</button>
 
   <button type="button" onclick="mostrarFerias()" style="background-color: orange; color: white; margin-left: 10px;">Férias</button>
@@ -203,6 +219,30 @@
     document.getElementById("feriasBox").style.display = "block";
   }
 </script>
+
+
+<script>
+  document.querySelectorAll('input[type=checkbox][name="excluir_feriados"], input[type=checkbox][name="atendimento_online"], input[type=checkbox][name="atendimento_presencial"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      fetch('/atualizar_opcao_agenda', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+          'opcao': cb.name,
+          'valor': cb.checked
+        })
+      }).then(resp => {
+        if (!resp.ok) alert('Erro ao salvar opção ' + cb.name);
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
 
 </body>
 </html>
