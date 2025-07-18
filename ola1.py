@@ -23,6 +23,8 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-store, must-revalidate, max-age=0'
+    response.headers['Pragma']        = 'no-cache'
+    response.headers['Expires']       = '0'
     return response
 
 
@@ -46,7 +48,7 @@ DB_PATH_PSICO = os.path.join(BASE_DIR, "agenda_psico.db")
  
  
  
-app = Flask(__name__)
+
 app.secret_key = 'uma_chave_secreta_segura'  # Troque por uma string segura
 # Configurações
 USUARIO = "alex"
@@ -55,10 +57,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "agenda_nutri.db")
 
 # Banco de dados
-
-
-
-
 
 
 def login_requerido(f):
@@ -101,37 +99,6 @@ def atualizar_banco_agendamentos():
 
     conn.commit()
     conn.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -316,28 +283,37 @@ DB_PATH_PSICO = os.path.join(BASE_DIR, "agenda_psico.db")
 
 
 
+
+
+
+
+
 @app.route("/psicologia_painel", methods=["GET", "POST"])
 @login_requerido
 def psicologia_painel():
+    # 1) abre conexão e cursor, já configurando row_factory para facilitar acesso por nome
     conn = sqlite3.connect(DB_PATH_PSICO)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    # Limpa pendentes muito antigos
+    # 2) limpa pendentes muito antigos
     cursor.execute(
         "DELETE FROM agendamentos_pendentes "
         "WHERE datetime(data || ' ' || hora) < datetime('now', '-1 day')"
     )
+    conn.commit()
 
-    # Busca pendentes e confirmados
-    cursor.execute("SELECT * FROM agendamentos_pendentes ORDER BY data, hora")
-    pendentes = cursor.fetchall()
-    cursor.execute("SELECT * FROM agendamentos_confirmados ORDER BY data, hora")
-    confirmados = cursor.fetchall()
+    # 3) busca pendentes e confirmados
+    pendentes = cursor.execute(
+        "SELECT * FROM agendamentos_pendentes ORDER BY data, hora"
+    ).fetchall()
+    confirmados = cursor.execute(
+        "SELECT * FROM agendamentos_confirmados ORDER BY data, hora"
+    ).fetchall()
 
-    # Se veio de um POST, insere a chave e redireciona (PRG)
+    # 4) se for POST, insere nova chave e redireciona (PRG)
     if request.method == "POST":
         chave = request.form.get("chave", "").strip()
-        # aqui não precisamos ler gerado_por do form — sempre 'Psicóloga'
         if chave:
             cursor.execute(
                 "INSERT INTO acessos_pacientes (chave, gerado_por) VALUES (?, 'Psicóloga')",
@@ -347,21 +323,40 @@ def psicologia_painel():
         conn.close()
         return redirect(url_for("psicologia_painel"))
 
-    # GET: carrega só as chaves da Psicóloga
-    cursor.execute("""
+    # 5) busca chaves de acesso
+    acessos = cursor.execute("""
         SELECT * FROM acessos_pacientes
-        WHERE gerado_por = 'Psicóloga'
-        ORDER BY id DESC
-    """)
-    acessos = cursor.fetchall()
+         WHERE gerado_por = 'Psicóloga'
+         ORDER BY id DESC
+    """).fetchall()
+
+    # 6) busca pacientes de sessão, ordenados
+    pacientes_sessao = cursor.execute("""
+        SELECT * FROM pacientes_sessao
+         ORDER BY dia_semana, horario
+    """).fetchall()
+
     conn.close()
 
+    # 7) renderiza tudo
     return render_template(
         "psicologia.html",
         pendentes=pendentes,
         confirmados=confirmados,
-        acessos=acessos
+        acessos=acessos,
+        pacientes_sessao=pacientes_sessao
     )
+
+
+
+
+    
+
+
+
+
+
+
 
 @app.route("/excluir_chave_psico", methods=["POST"])
 @login_requerido
@@ -374,66 +369,6 @@ def excluir_chave_psico():
         conn.commit()
         conn.close()
     return redirect(url_for("psicologia_painel"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -676,31 +611,6 @@ def nutricao_painel():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3, json, holidays
 from datetime import datetime, timedelta, date
@@ -714,8 +624,7 @@ def agendar():
     data_minima = daqui_48h.date().isoformat()
     data_maxima = daqui_20d.date().isoformat()
 
-
-    
+   
     
     
     # Carrega períodos de férias
@@ -998,60 +907,6 @@ def salvar_paciente_confirmado():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route("/adicionar_plano", methods=["POST"])
 def adicionar_plano():
     nome = request.form.get("nome_plano")
@@ -1078,16 +933,6 @@ def excluir_plano():
         conn.commit()
         conn.close()
     return redirect(url_for("agenda_nutri"))
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1138,41 +983,6 @@ def excluir_ferias():
         conn.commit()
         conn.close()
     return redirect(url_for("agenda_nutri"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1398,63 +1208,6 @@ def salvar_agenda_psicologia():
     conn.commit()
     conn.close()
     return redirect(url_for("psicologia_painel"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1806,62 +1559,6 @@ def excluir_confirmado_psico():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route("/salvar_paciente_confirmado_psico", methods=["POST"])
 @login_requerido
 def salvar_paciente_confirmado_psico():
@@ -1959,19 +1656,6 @@ def excluir_paciente_sessao():
     conn.commit()
     conn.close()
     return redirect(url_for('psicologia_painel'))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

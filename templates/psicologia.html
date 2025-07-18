@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Área da Psicologia</title>
+  <title>Área da Psicologia</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -118,6 +119,44 @@
     #formSessao button:hover {
       background-color: #5e35b1;
     }
+
+    /* TreeView styles */
+    .treeview {
+      list-style: none;
+      padding-left: 0;
+      max-width: 800px;
+      margin: 0 auto 40px auto;
+    }
+    .treeview li {
+      margin: 5px 0;
+      position: relative;
+      padding-left: 20px;
+    }
+    .treeview li::before {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 12px;
+      width: 10px;
+      height: 2px;
+      background: #aaa;
+    }
+    .treeview input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .treeview label {
+      cursor: pointer;
+    }
+    .treeview ul {
+      list-style: none;
+      padding-left: 15px;
+      display: none;
+    }
+    .treeview input:checked + ul {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -139,14 +178,14 @@
   {% if pendentes %}
     <table>
       <thead>
-        <tr>
-          <th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th><th>Plano</th><th>Tipo</th><th>Ação</th>
-        </tr>
+        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th>
+            <th>Plano</th><th>Tipo</th><th>Ação</th></tr>
       </thead>
       <tbody>
         {% for row in pendentes %}
         <tr>
-          <td>{{ row[1] }}</td><td>{{ row[2] }}</td><td>{{ row[3] }}</td><td>{{ row[4] }}</td><td>{{ row[5] }}</td>
+          <td>{{ row[1] }}</td><td>{{ row[2] }}</td><td>{{ row[3] }}</td>
+          <td>{{ row[4] }}</td><td>{{ row[5] }}</td>
           <td>{{ row[6] }}</td><td>{{ row[7] }}</td>
           <td>
             <form method="POST" action="{{ url_for('confirmar_agendamento_psico') }}" style="display:inline;">
@@ -169,7 +208,8 @@
   <!-- 2) Confirmação manual -->
   <hr>
   <div style="text-align:center; margin-top:20px;">
-    <button onclick="mostrarForm('formPaciente')" style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
+    <button onclick="mostrarForm('formPaciente')" 
+            style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
       Adicionar Paciente
     </button>
   </div>
@@ -202,14 +242,14 @@
   {% if confirmados %}
     <table>
       <thead>
-        <tr>
-          <th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th><th>Plano</th><th>Tipo</th><th>Ação</th>
-        </tr>
+        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Data</th><th>Hora</th>
+            <th>Plano</th><th>Tipo</th><th>Ação</th></tr>
       </thead>
       <tbody>
         {% for c in confirmados %}
         <tr>
-          <td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] }}</td><td>{{ c[5] }}</td>
+          <td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td>
+          <td>{{ c[4] }}</td><td>{{ c[5] }}</td>
           <td>{{ c[6] }}</td><td>{{ c[7] }}</td>
           <td>
             <form method="POST" action="{{ url_for('excluir_confirmado_psico') }}">
@@ -259,11 +299,12 @@
     <p class="mensagem">Nenhuma chave cadastrada.</p>
   {% endif %}
 
-  <!-- 5) Sessões de Terapia Fixas -->
+  <!-- 5) Sessões de Terapia Fixas em TreeView -->
   <hr>
   <h2>Pacientes de Sessão</h2>
   <div style="text-align:center; margin-bottom:15px;">
-    <button onclick="mostrarForm('formSessao')" style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
+    <button onclick="mostrarForm('formSessao')" 
+            style="background-color:#8e24aa; color:white; padding:10px 20px; border:none; border-radius:5px;">
       Adicionar Paciente de Sessão
     </button>
   </div>
@@ -283,27 +324,29 @@
       <button type="submit">Salvar Sessão</button>
     </form>
   </div>
+
   {% if pacientes_sessao %}
-    <table>
-      <thead>
-        <tr><th>Nome</th><th>Telefone</th><th>Dia</th><th>Horário</th><th>Ação</th></tr>
-      </thead>
-      <tbody>
-        {% for p in pacientes_sessao %}
-        <tr>
-          <td>{{ p.nome }}</td><td>{{ p.telefone }}</td><td>{{ p.dia_semana }}</td><td>{{ p.horario }}</td>
-          <td>
-            <form method="POST" action="{{ url_for('excluir_paciente_sessao') }}">
-              <input type="hidden" name="id" value="{{ p.id }}">
-              <button type="submit" class="recusar-btn" onclick="return confirm('Remover este paciente da sessão?')">
-                Excluir
-              </button>
-            </form>
-          </td>
-        </tr>
+  <ul class="treeview">
+    {% for group in pacientes_sessao|groupby('dia_semana') %}
+    <li>
+      <input type="checkbox" id="dia-{{ group.grouper }}" />
+      <label for="dia-{{ group.grouper }}"><strong>{{ group.grouper }}</strong></label>
+      <ul>
+        {% for p in group.list %}
+        <li>
+          {{ p.nome }} — {{ p.telefone }} às {{ p.horario }}
+          <form method="POST" action="{{ url_for('excluir_paciente_sessao') }}" style="display:inline;">
+            <input type="hidden" name="id" value="{{ p.id }}">
+            <button type="submit" class="recusar-btn" onclick="return confirm('Remover este paciente da sessão?')">
+              Excluir
+            </button>
+          </form>
+        </li>
         {% endfor %}
-      </tbody>
-    </table>
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
   {% else %}
     <p class="mensagem">Nenhum paciente de sessão cadastrado.</p>
   {% endif %}
