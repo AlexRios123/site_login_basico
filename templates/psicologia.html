@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Área da Psicologia</title>
-  <title>Área da Psicologia</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -120,7 +119,7 @@
       background-color: #5e35b1;
     }
 
-    /* TreeView styles */
+    /* TreeView sempre aberta */
     .treeview {
       list-style: none;
       padding-left: 0;
@@ -141,21 +140,10 @@
       height: 2px;
       background: #aaa;
     }
-    .treeview input {
-      position: absolute;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .treeview label {
-      cursor: pointer;
-    }
     .treeview ul {
       list-style: none;
       padding-left: 15px;
-      display: none;
-    }
-    .treeview input:checked + ul {
-      display: block;
+      display: block;  /* sempre visível */
     }
   </style>
 </head>
@@ -215,18 +203,12 @@
   </div>
   <div id="formPaciente">
     <form method="POST" action="{{ url_for('salvar_paciente_confirmado_psico') }}">
-      <label>Nome:</label>
-      <input type="text" name="nome" required>
-      <label>CPF:</label>
-      <input type="text" name="cpf" required>
-      <label>Telefone:</label>
-      <input type="text" name="telefone" required>
-      <label>Data:</label>
-      <input type="date" name="data" required>
-      <label>Hora:</label>
-      <input type="time" name="hora" required>
-      <label>Plano:</label>
-      <input type="text" name="plano" required>
+      <label>Nome:</label><input type="text" name="nome" required>
+      <label>CPF:</label><input type="text" name="cpf" required>
+      <label>Telefone:</label><input type="text" name="telefone" required>
+      <label>Data:</label><input type="date" name="data" required>
+      <label>Hora:</label><input type="time" name="hora" required>
+      <label>Plano:</label><input type="text" name="plano" required>
       <label>Tipo:</label>
       <select name="tipo" required>
         <option>Presencial</option>
@@ -278,9 +260,7 @@
   <h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
   {% if acessos %}
     <table>
-      <thead>
-        <tr><th>ID</th><th>Chave</th><th>Gerado por</th><th>Ação</th></tr>
-      </thead>
+      <thead><tr><th>ID</th><th>Chave</th><th>Gerado por</th><th>Ação</th></tr></thead>
       <tbody>
         {% for a in acessos %}
         <tr>
@@ -299,7 +279,16 @@
     <p class="mensagem">Nenhuma chave cadastrada.</p>
   {% endif %}
 
-  <!-- 5) Sessões de Terapia Fixas em TreeView -->
+  <!-- … seu <head> e os outros blocos continuam iguais … -->
+
+
+
+
+
+
+
+
+    <!-- 5) Sessões de Terapia Fixas em tabela -->
   <hr>
   <h2>Pacientes de Sessão</h2>
   <div style="text-align:center; margin-bottom:15px;">
@@ -308,45 +297,62 @@
       Adicionar Paciente de Sessão
     </button>
   </div>
-  <div id="formSessao">
+
+  <!-- formulário oculto até clicar em “Adicionar” -->
+  <div id="formSessao" style="display:none; margin:20px auto; max-width:600px; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);">
     <form method="POST" action="{{ url_for('salvar_paciente_sessao') }}">
-      <label>Nome do paciente:</label>
+      <label>Nome do Paciente:</label>
       <input type="text" name="nome" required>
+
       <label>Telefone:</label>
       <input type="text" name="telefone" required>
-      <label>Dia da semana:</label>
+
+      <label>Dia da Semana:</label>
       <select name="dia_semana" required>
-        <option>Segunda</option><option>Terça</option><option>Quarta</option>
-        <option>Quinta</option><option>Sexta</option>
+        <option>Segunda</option>
+        <option>Terça</option>
+        <option>Quarta</option>
+        <option>Quinta</option>
+        <option>Sexta</option>
       </select>
+
       <label>Horário:</label>
       <input type="time" name="horario" required>
+
       <button type="submit">Salvar Sessão</button>
     </form>
   </div>
 
   {% if pacientes_sessao %}
-  <ul class="treeview">
-    {% for group in pacientes_sessao|groupby('dia_semana') %}
-    <li>
-      <input type="checkbox" id="dia-{{ group.grouper }}" />
-      <label for="dia-{{ group.grouper }}"><strong>{{ group.grouper }}</strong></label>
-      <ul>
-        {% for p in group.list %}
-        <li>
-          {{ p.nome }} — {{ p.telefone }} às {{ p.horario }}
-          <form method="POST" action="{{ url_for('excluir_paciente_sessao') }}" style="display:inline;">
-            <input type="hidden" name="id" value="{{ p.id }}">
-            <button type="submit" class="recusar-btn" onclick="return confirm('Remover este paciente da sessão?')">
-              Excluir
-            </button>
-          </form>
-        </li>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Telefone</th>
+          <th>Dia da Semana</th>
+          <th>Horário</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pacientes_sessao %}
+        <tr>
+          <td>{{ p.nome }}</td>
+          <td>{{ p.telefone }}</td>
+          <td>{{ p.dia_semana }}</td>
+          <td>{{ p.horario }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('excluir_paciente_sessao') }}" style="display:inline;">
+              <input type="hidden" name="id" value="{{ p.id }}">
+              <button type="submit" class="recusar-btn" onclick="return confirm('Remover este paciente da sessão?')">
+                Excluir
+              </button>
+            </form>
+          </td>
+        </tr>
         {% endfor %}
-      </ul>
-    </li>
-    {% endfor %}
-  </ul>
+      </tbody>
+    </table>
   {% else %}
     <p class="mensagem">Nenhum paciente de sessão cadastrado.</p>
   {% endif %}
@@ -356,6 +362,23 @@
       document.getElementById(id).style.display = 'block';
     }
   </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </body>
 </html>

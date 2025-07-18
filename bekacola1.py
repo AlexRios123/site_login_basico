@@ -16,8 +16,8 @@ from datetime import datetime as dt
 app = Flask(__name__)
 app.secret_key = 'uma_chave_secreta_segura'  # Troque por uma string segura
 # Configurações
-USUARIO = "alex"
-SENHA = "123"
+USUARIO = "alroka"
+SENHA = "201810"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "agenda_nutri.db")
 

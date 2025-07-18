@@ -257,14 +257,16 @@
 
 <!-- Formulário para gerar chave -->
 <h2>Gerar Chave de Acesso</h2>
-<form method="POST" action="/nutricao_painel" style="text-align:center; margin-bottom:20px;">
-  <input type="text" name="chave" placeholder="CPF ou código do paciente" required>
-  <select name="gerado_por" required>
-    <option value="Nutricionista">Nutricionista</option>
-    <option value="Psicóloga">Psicóloga</option>
-  </select>
+
+
+
+<form method="POST" action="/nutricao_painel">
+  <input name="chave" placeholder="CPF ou código" required>
   <button type="submit">Adicionar Chave</button>
 </form>
+
+
+
 
 <h3 style="text-align:center;">Chaves de Acesso Geradas</h3>
 {% if acessos %}

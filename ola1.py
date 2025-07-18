@@ -9,12 +9,12 @@ import holidays
 from datetime import datetime, timedelta, date
 from datetime import datetime as dt
 import re
-
+from datetime import timedelta
 
 #PARA APGAR AO FINAL 
 app = Flask(__name__)
 app.secret_key = 'uma_chave_secreta_segura'
-
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 # força recarregamento de templates e desativa cache de estáticos em dev
 app.config['TEMPLATES_AUTO_RELOAD']     = True
@@ -51,8 +51,8 @@ DB_PATH_PSICO = os.path.join(BASE_DIR, "agenda_psico.db")
 
 app.secret_key = 'uma_chave_secreta_segura'  # Troque por uma string segura
 # Configurações
-USUARIO = "alex"
-SENHA = "123"
+USUARIO = "alroka"
+SENHA = "@A201810"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "agenda_nutri.db")
 
@@ -251,6 +251,14 @@ def criar_bancos():
             )
         """)
         
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS galeria_fotos (
+                slot     INTEGER PRIMARY KEY,  -- valores de 1 a 4
+                filename TEXT    NOT NULL     -- ex: 'padrao2.png'
+            )
+        """)
+        
+        
         
         
         conn.commit()
@@ -384,12 +392,31 @@ atualizar_banco_agendamentos()
 # Rotas
 @app.route("/", methods=["GET", "POST"])
 def login():
+    # → 1) SEMPRE carregue a galeria
+    conn   = sqlite3.connect(DB_PATH_PSICO)
+    cursor = conn.cursor()
+    cursor.execute("SELECT slot, filename FROM galeria_fotos")
+    rows = cursor.fetchall()
+    conn.close()
+    # monta dicionário {'1':'padrao1.jpg', …}
+    galeria = { str(slot): filename for slot, filename in rows }
+  
+    
+    
+    
     if request.method == "POST":
         if request.form.get("usuario") == USUARIO and request.form.get("senha") == SENHA:
+            session.permanent = True
             session['logado'] = True
             return redirect(url_for("bemvindo"))
-        return render_template("login.html", erro="Usuário ou senha incorretos.")
-    return render_template("login.html")
+       
+    
+        return render_template("login.html",
+                                erro="Usuário ou senha incorretos.",
+                                galeria=galeria)
+    return render_template("login.html", galeria=galeria)
+
+
 
 
 @app.route("/logout")
@@ -404,7 +431,10 @@ def logout():
 @app.route("/bemvindo")
 @login_requerido
 def bemvindo():
-    return render_template("bemvindo.html")
+    return render_template('bemvindo.html')
+    
+    
+    
 
 
 
@@ -423,6 +453,7 @@ def verificar_login():
     conn.close()
 
     if resultado:
+        session.permanent = True 
         session["logado"] = True
         session["usuario"] = usuario
         session["cargo"] = resultado[0]
@@ -1355,16 +1386,47 @@ def agendar_psicologia():
         conn = sqlite3.connect(DB_PATH_PSICO)
         cursor = conn.cursor()
         ocu = {}
+
+        # 1) Carrega agendamentos confirmados e pendentes
         cursor.execute("SELECT data, hora FROM agendamentos_confirmados WHERE tipo_atendimento='Psicóloga'")
         for d, h in cursor.fetchall():
             ocu.setdefault(d, []).append(h)
         cursor.execute("SELECT data, hora FROM agendamentos_pendentes WHERE tipo_atendimento='Psicóloga'")
         for d, h in cursor.fetchall():
             ocu.setdefault(d, []).append(h)
+
+        # 2) Carrega sessões fixas (pacientes_sessao)
+        cursor.execute("SELECT dia_semana, horario FROM pacientes_sessao")
+        sessoes = cursor.fetchall()
         conn.close()
+
+        # Mapeia nome do dia para weekday
+        dia_map = {
+            "Segunda": 0, "Terça": 1, "Quarta": 2,
+            "Quinta": 3,  "Sexta": 4
+        }
+
+        # Para os próximos 60 dias, bloqueia o horário fixo em cada data correspondente
+        hoje_mais_2 = date.today() + timedelta(days=2)
+        for dia_semana, horario in sessoes:
+            wd = dia_map.get(dia_semana)
+            if wd is None:
+                continue
+            for i in range(60):
+                d = hoje_mais_2 + timedelta(days=i)
+                if d.weekday() == wd:
+                    ocu.setdefault(d.isoformat(), []).append(horario)
+
         return ocu
 
     ocupados = horarios_ocupados()
+
+
+
+
+
+
+
 
     # 7) Calcula dias bloqueados (fim de semana, feriados, férias ou sem horários livres)
     def dias_sem_agenda(agenda, feriados, ocupados, duracao, periodos_ferias):
@@ -1662,6 +1724,68 @@ def excluir_paciente_sessao():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from werkzeug.utils import secure_filename
+
+@app.route('/upload_foto', methods=['POST'])
+@login_requerido
+def upload_foto():
+    slot    = request.form.get('slot')        # "1", "2", "3" ou "4"
+    arquivo = request.files.get('arquivo')
+    if not slot or not arquivo:
+        return redirect(url_for('login'))      # ou 'bemvindo', conforme você queira
+
+    # 1) Garante nome seguro, mantendo extensão
+    original = secure_filename(arquivo.filename)
+    ext      = os.path.splitext(original)[1] or '.jpg'
+    nome     = f'padrao{slot}{ext}'
+    destino  = os.path.join(app.static_folder, 'img', nome)
+    arquivo.save(destino)
+
+    # 2) Insere ou atualiza no banco
+    conn = sqlite3.connect(DB_PATH_PSICO)
+    c    = conn.cursor()
+    c.execute("""
+      INSERT INTO galeria_fotos (slot, filename)
+      VALUES (?, ?)
+      ON CONFLICT(slot) DO UPDATE SET filename=excluded.filename
+    """, (int(slot), nome))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('bemvindo'))
+
+
+
+
+@app.before_request
+def refresh_session():
+    session.modified = True
+
+
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-store'
@@ -1670,7 +1794,17 @@ def add_header(response):
 
 
 
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     criar_bancos()
     atualizar_banco_agendamentos()  # Se quiser manter isso como suporte
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=False)

@@ -9,13 +9,6 @@
       background: #f5f5f5;
       margin: 0;
     }
-
-
-
-
-
-
-
     header {
       background: rgb(209, 223, 209);
       padding: 10px 20px;
@@ -52,12 +45,20 @@
       background-color: #ddd;
     }
     .apresentacao {
-      background: white;
-      text-align: center;
-      padding: 30px 20px 10px;
-      font-size: 18px;
-      color: #333;
-      line-height: 1.6;
+      background: #8e24aa;               /* mantém o fundo claro */
+      max-width: 1100px;                  /* largura máxima para melhor leitura */
+      margin: 10px auto;                 /* centraliza e afasta do topo/rodapé */
+      padding: 5px 20px;                /* espaço interno maior e uniforme */
+      border-radius: 12px;               /* cantos arredondados para suavizar */
+      box-shadow: 0 4px 12px rgba(228, 23, 211, 0.1); /* sombra sutil para destacar */
+      
+      font-family: 'Georgia', serif;     /* fonte elegante de estilo clássico */
+      font-style: italic;                /* itálico suave para leveza */
+      font-size: 30px;                   /* um pouco maior para conforto de leitura */
+      color: #fff;                       /* cinza escuro menos contrastante que o preto */
+      line-height: 1.8;                  /* maior espaçamento entre linhas */
+
+      text-align: center;                /* mantém o texto centralizado */
     }
     .conteudo {
       display: flex;
@@ -103,17 +104,6 @@
     .btn-agendar:hover {
       transform: scale(1.05);
     }
-    .coluna img.perfil {
-      width: 100%;
-      max-width: 300px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    .coluna p {
-      font-size: 14px;
-      margin: 0 20px 20px;
-    }
-
     .descricao-nutri {
       font-size: 15px;
       line-height: 1.8;
@@ -131,9 +121,83 @@
       color: #666;
     }
 
+    /* classes individuais para fotos */
+    .perfil-nutri {
+      width: 100%;
+      max-width: 300px;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 5px;
+    }
+    .perfil-psico {
+      width: 100%;
+      max-width: 300px;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 5px;
+    }
+
+    /* overrides para psicóloga em lilás */
+    .coluna.psico h2 {
+      color: #8e24aa;
+    }
+    .coluna.psico .btn-agendar {
+      background: linear-gradient(to bottom right, #ba68c8, #8e24aa);
+    }
+    .coluna.psico p.nome-psico {
+      color: #8e24aa;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+
+    /* ---------- Seção das 4 fotos extras ---------- */
+    .galeria {
+      max-width: 800px;
+      margin: 40px auto;
+      text-align: center;
+    }
+    .foto-slot {
+      margin: 20px 0;
+    }
+    .foto-slot img {
+      /* Ajuste manual em cada classe abaixo */
+      display: block;
+      margin: 0 auto;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    /* Classes individuais para você configurar no CSS: */
+    .foto1 img { width: 100%; max-width: 3500px; height: auto; }
+    .foto2 img { width: 100%; max-width: 3000px; height: auto; }
+    .foto3 img { width: 100%; max-width: 3500px; height: auto; }
+    .foto4 img { width: 100%; max-width: 3000px; height: auto; }
+
     
-    
-    
+    /* Rodapé de contato: limpar floats, fundo branco, margem generosa */
+    .contato {
+      clear: both;                      /* garante que fique abaixo de tudo */
+      max-width: 1100px;
+      margin: 60px auto 20px;          /* mais espaço acima e abaixo */
+      padding: 15px 20px;
+      background: #fff;                 /* fundo branco para não sobrepor */
+      border-top: 1px solid #ddd;       /* linha sutil de separação */
+      text-align: right;
+      font-size: 18px;
+      color: #444;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+    .contato img {
+      width: 20px;
+      height: auto;
+    }
+
 
 
 
@@ -145,34 +209,24 @@
     <div class="logo">
       <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo PsiconutriSaúde">
     </div>
-
-
-
     <div class="login-box">
       <form method="POST">
         <input type="text" name="usuario" placeholder="Usuário" required>
         <input type="password" name="senha" placeholder="Senha" required>
         <button type="submit">Entrar</button>
       </form>
-
-      <form action="/acesso_paciente" method="GET">
-        <button type="submit" style="margin-top: 10px;">🔑 Acesso do Paciente</button>
+      <form action="/acesso_paciente" method="GET" style="margin-top:10px;">
+        <button type="submit">🔑 Acesso do Paciente</button>
       </form>
       {% if erro %}
         <p style="color: red;">{{ erro }}</p>
       {% endif %}
     </div>
-
-
-
-
-
-
   </header>
 
   <div class="apresentacao">
     <p>
-      A <strong>PsiconutriSaúde</strong> foi constituída com a finalidade de prestar um atendimento de excelência, humanizado e acolhedor.
+      A <strong>PsiconutriSaúde</strong> foi constituída com a finalidade de prestar atendimento de excelência, humanizado e acolhedor.
     </p>
   </div>
 
@@ -191,7 +245,9 @@
           📅 Agendar
         </a>
       </div>
-      <img src="{{ url_for('static', filename='img/nutri.jpg') }}" alt="Rogéria Souza" class="perfil">
+      <img src="{{ url_for('static', filename='img/nutri.jpg') }}"
+           alt="Rogéria Souza"
+           class="perfil-nutri">
       <p class="descricao-nutri">
         <strong>Rogéria Souza</strong><br>
         <span class="registro">CRN/MG 34768</span><br>
@@ -204,7 +260,7 @@
     </div>
 
     <!-- Coluna Psicóloga -->
-    <div class="coluna">
+    <div class="coluna psico">
       <h2>Psicóloga</h2>
       <div class="botoes-sociais">
         <a href="https://wa.me/5531888888888" target="_blank">
@@ -217,9 +273,28 @@
           📅 Agendar
         </a>
       </div>
-      <img src="{{ url_for('static', filename='img/psico.jpg') }}" alt="Psicóloga em construção" class="perfil">
+      <img src="{{ url_for('static', filename='img/psicologa.jpeg') }}"
+           alt="\Psicóloga"
+           class="perfil-psico">
+      <p class="nome-psico">Psicóloga</p>
       <p>Em construção!</p>
     </div>
   </div>
+
+  <!-- Galeria de 4 fotos extras -->
+  <div class="galeria">
+    {% for i in ['1','2','3','4'] %}
+      <div class="foto-slot foto{{ i }}">
+        <img src="{{ url_for('static', filename='img/' ~ galeria[i]) }}"
+             alt="Foto {{ i }}">
+      </div>
+    {% endfor %}
+  </div>
+  <div class="contato">
+    
+    <span>     Empresarial Maria Júlia – R. Mal. Floriano, 654 – Centro, Governador Valadares/MG.</span>
+  </div>
+
+
 </body>
 </html>
