@@ -10,14 +10,12 @@
       text-align: center;
       padding-top: 60px;
     }
-
     .box-container {
       display: flex;
       justify-content: center;
       gap: 60px;
       flex-wrap: wrap;
     }
-
     .box {
       background-color: white;
       padding: 20px;
@@ -25,11 +23,7 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 220px;
     }
-
-    .nutri .box h2 {
-      color: #4CAF50;
-    }
-
+    .nutri .box h2 { color: #4CAF50; }
     .nutri .box form button {
       background-color: #4CAF50;
       color: white;
@@ -38,15 +32,8 @@
       padding: 8px;
       cursor: pointer;
     }
-
-    .nutri .box form button:hover {
-      background-color: #388E3C;
-    }
-
-    .psico .box h2 {
-      color: #8e24aa;
-    }
-
+    .nutri .box form button:hover { background-color: #388E3C; }
+    .psico .box h2 { color: #8e24aa; }
     .psico .box form button {
       background-color: #8e24aa;
       color: white;
@@ -55,11 +42,7 @@
       padding: 8px;
       cursor: pointer;
     }
-
-    .psico .box form button:hover {
-      background-color: #6a1b9a;
-    }
-
+    .psico .box form button:hover { background-color: #6a1b9a; }
     .box form input,
     .box form select {
       width: 100%;
@@ -69,19 +52,15 @@
       border-radius: 4px;
       box-sizing: border-box;
     }
-
     .erro {
       color: red;
       margin-top: 8px;
     }
-
     img.logo {
       width: 400px;
       height: auto;
       margin-bottom: 30px;
     }
-
-    /* Estilos da nova seção de upload */
     .upload-section {
       background: white;
       max-width: 500px;
@@ -91,10 +70,7 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       text-align: left;
     }
-    .upload-section h3 {
-      margin-top: 0;
-      color: #333;
-    }
+    .upload-section h3 { margin-top: 0; color: #333; }
     .upload-section form {
       display: flex;
       flex-direction: column;
@@ -117,23 +93,21 @@
       cursor: pointer;
       align-self: flex-end;
     }
-    .upload-section form button:hover {
-      background-color: #388E3C;
-    }
+    .upload-section form button:hover { background-color: #388E3C; }
   </style>
 </head>
 <body>
-  
-  <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
+  <!-- Logo -->
+  <img src="{{ url_for('static', filename='img/logo.png') }}"
+       alt="Logo PsiconutriSaúde" class="logo">
 
+  <!-- Caixa de login -->
   <div class="box-container">
-    
     <!-- Nutrição -->
     <div class="nutri">
       <div class="box">
-        <h2>Nutrição</h2>
-        <form method="POST" action="/verificar_login">
-          <input type="hidden" name="origem" value="nutricao">
+        <h2>Nutricionista (Admin)</h2>
+        <form method="POST" action="{{ url_for('login_nutri') }}">
           <input type="text" name="usuario" placeholder="Usuário" required>
           <input type="password" name="senha" placeholder="Senha" required>
           <button type="submit">Entrar</button>
@@ -148,8 +122,7 @@
     <div class="psico">
       <div class="box">
         <h2>Psicologia</h2>
-        <form method="POST" action="/verificar_login">
-          <input type="hidden" name="origem" value="psicologia">
+        <form method="POST" action="{{ url_for('login_psico') }}">
           <input type="text" name="usuario" placeholder="Usuário" required>
           <input type="password" name="senha" placeholder="Senha" required>
           <button type="submit">Entrar</button>
@@ -159,13 +132,13 @@
         {% endif %}
       </div>
     </div>
-
   </div>
 
-  <!-- Seção de upload de fotos -->
+  <!-- Upload de fotos -->
   <div class="upload-section">
-    <h3>Enviar Foto </h3>
-    <form method="POST" action="{{ url_for('upload_foto') }}" enctype="multipart/form-data">
+    <h3>Enviar Foto</h3>
+    <form method="POST" action="{{ url_for('upload_foto') }}"
+          enctype="multipart/form-data">
       <label for="slot">Escolha o slot de foto:</label>
       <select id="slot" name="slot" required>
         <option value="" disabled selected>Selecione...</option>
@@ -176,16 +149,11 @@
       </select>
 
       <label for="arquivo">Selecione o arquivo:</label>
-      <input type="file" id="arquivo" name="arquivo" accept="image/*" required>
+      <input type="file" id="arquivo" name="arquivo"
+             accept="image/*" required>
 
       <button type="submit">Carregar</button>
     </form>
   </div>
- 
-
-
-
-
-
 </body>
 </html>

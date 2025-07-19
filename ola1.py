@@ -17,8 +17,8 @@ app.secret_key = 'uma_chave_secreta_segura'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 # força recarregamento de templates e desativa cache de estáticos em dev
-app.config['TEMPLATES_AUTO_RELOAD']     = True
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+#app.config['TEMPLATES_AUTO_RELOAD']     = True
+#app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.after_request
 def add_header(response):
@@ -68,6 +68,36 @@ def login_requerido(f):
     return decorated_function
 
 
+
+
+
+@app.route("/nutricao", methods=["GET", "POST"])
+def login_nutri():
+    if request.method == "POST":
+        usuario = request.form.get("usuario", "").strip()
+        senha = request.form.get("senha", "").strip()
+
+        if usuario == "nutri" and senha == "123":
+            session["logado"] = True
+            session["perfil"] = "Nutricionista"
+            return redirect(url_for("nutricao_painel"))
+        else:
+            return render_template("bemvindo.html", erro_nutri="Usuário ou senha inválidos")
+
+    # Se GET, redireciona para tela de login
+    return redirect(url_for("bemvindo"))
+
+@app.route("/psicologia", methods=["POST"])
+def login_psico():
+    usuario = request.form.get("usuario", "").strip()
+    senha = request.form.get("senha", "").strip()
+
+    if usuario == "psico" and senha == "123":
+        session["logado"] = True
+        session["perfil"] = "Psicóloga"
+        return redirect(url_for("psicologia_painel"))
+    else:
+        return render_template("bemvindo.html", erro_psico="Usuário ou senha inválidos")
 
 
 
@@ -447,8 +477,7 @@ def logout():
 def bemvindo():
     return render_template('bemvindo.html')
     
-    
-    
+
 
 
 
@@ -591,7 +620,7 @@ def salvar_agenda():
     conn.commit()
     conn.close()
 
-    return redirect(url_for("nutricao_painel"))
+    return redirect(url_for("agenda_nutri"))
 
 
 
@@ -857,6 +886,29 @@ def agendar():
         if (inicio_data + timedelta(days=i)).isoformat() not in dias_bloqueados
     ]
 
+
+    # 5.1) Carrega flags de online/presencial da configuração
+   
+    conn2 = sqlite3.connect(DB_PATH)
+    cur2  = conn2.cursor()
+    cur2.execute("""
+        SELECT atendimento_online, atendimento_presencial
+        FROM agenda_nutricionista
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+    row_flags = cur2.fetchone() or (0,0)
+    conn2.close()
+    atendimento_online     = bool(row_flags[0])
+    atendimento_presencial = bool(row_flags[1])
+
+
+
+
+
+
+
+
     # Contexto padrão para o template
     context = {
         "data_minima": data_minima,
@@ -867,7 +919,13 @@ def agendar():
         "dias_bloqueados_json": json.dumps(dias_bloqueados),
         "dias_disponiveis": dias_disponiveis,
         "duracao": duracao,
-        "planos": planos 
+        "planos": planos,
+        "atendimento_online": atendimento_online,
+        "atendimento_presencial": atendimento_presencial
+        
+               
+        
+         
     }
 
     # 6) Se for POST, faz validações e grava
@@ -1462,10 +1520,10 @@ def agendar_psicologia():
         ocu = {}
 
         # 1) Carrega agendamentos confirmados e pendentes
-        cursor.execute("SELECT data, hora FROM agendamentos_confirmados WHERE tipo_atendimento='Psicóloga'")
+        cursor.execute("SELECT data, hora FROM agendamentos_confirmados")
         for d, h in cursor.fetchall():
             ocu.setdefault(d, []).append(h)
-        cursor.execute("SELECT data, hora FROM agendamentos_pendentes WHERE tipo_atendimento='Psicóloga'")
+        cursor.execute("SELECT data, hora FROM agendamentos_pendentes")
         for d, h in cursor.fetchall():
             ocu.setdefault(d, []).append(h)
 
@@ -1605,12 +1663,30 @@ def agendar_psicologia():
 
         # verifica duplicidade
         cursor.execute(
-            "SELECT 1 FROM agendamentos_pendentes WHERE data=? AND hora=? AND tipo_atendimento='Psicóloga'",
+            "SELECT 1 FROM agendamentos_pendentes "
+            "WHERE data=? AND hora=?",
             (data_escolhida, hora_escolhida)
         )
         if cursor.fetchone():
             conn.close()
             return render_template("psicologia_agendamento.html", erro="❌ Horário reservado.", **context)
+
+
+        cursor.execute(
+            "SELECT 1 FROM agendamentos_confirmados "
+            "WHERE data=? AND hora=?",
+            (data_escolhida, hora_escolhida)
+        )
+        if cursor.fetchone():
+            conn.close()
+            return render_template("psicologia_agendamento.html",
+                                erro="❌ Este horário já está confirmado.",
+                                **context)
+
+
+
+
+
 
         # busca o nome do plano apenas uma vez
         cursor.execute("SELECT nome FROM planos_psicologicos WHERE id = ?", (plano_id,))
@@ -1900,4 +1976,4 @@ corrigir_tabela_agenda_nutricionista()
 if __name__ == "__main__":
     criar_bancos()
     atualizar_banco_agendamentos()  # Se quiser manter isso como suporte
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
